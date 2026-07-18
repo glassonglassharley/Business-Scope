@@ -110,11 +110,22 @@ export function NewAuditForm({ onSubmit }) {
         body: JSON.stringify({ place })
       });
       const body = await response.json();
-      if (!response.ok || !body.ok) return { ok: false, audit: null };
+      if (!response.ok || !body.ok) return unavailableWebsiteAudit(place, body.error?.message);
       return { ok: true, audit: body.audit };
     } catch {
-      return { ok: false, audit: null };
+      return unavailableWebsiteAudit(place, "Website scan could not run this time.");
     }
+  }
+
+  function unavailableWebsiteAudit(place, reason) {
+    return {
+      ok: false,
+      audit: {
+        status: "scan_unavailable",
+        websiteUrl: place?.website || null,
+        reason: reason || "Website scan could not run this time."
+      }
+    };
   }
 
   function submit(event) {

@@ -19,12 +19,12 @@ export function calculateScore(prospect) {
 }
 
 /**
- * @typedef {"measured" | "not_yet_scanned"} ScanStatus
+ * @typedef {"measured" | "not_yet_scanned" | "scan_unavailable"} ScanStatus
  * @typedef {"High" | "Medium" | "Low"} IssueImpact
  * @typedef {{ id: string, label: string, value: boolean | number | null, score: number | null, note: string }} VisibilityMetric
  * @typedef {{ key: string, label: string, baseWeight: number, weight: number, status: ScanStatus, score: number | null, metrics: VisibilityMetric[] }} VisibilityCategoryScore
  * @typedef {{ id: string, category: string, title: string, impact: IssueImpact, suggestedFix: string }} VisibilityIssue
- * @typedef {{ overallScore: number | null, availableWeight: number, categories: VisibilityCategoryScore[], strengths: string[], prioritizedIssues: VisibilityIssue[], suggestedFixes: string[] }} BusinessHealthScoreBreakdown
+ * @typedef {{ overallScore: number | null, availableWeight: number, hasScanError: boolean, scanErrors: string[], categories: VisibilityCategoryScore[], strengths: string[], prioritizedIssues: VisibilityIssue[], suggestedFixes: string[] }} BusinessHealthScoreBreakdown
  */
 
 // Technical Health is intentionally easy to tune as the website scanner matures.
@@ -60,7 +60,7 @@ export function calculateBusinessHealthScore(prospect) {
     return {
       ...category,
       ...measured,
-      status: measured.score === null ? "not_yet_scanned" : "measured"
+      status: measured.status || (measured.score === null ? "not_yet_scanned" : "measured")
     };
   });
   const measuredCategories = rawCategories.filter((category) => category.status === "measured" && typeof category.score === "number");
@@ -77,12 +77,15 @@ export function calculateBusinessHealthScore(prospect) {
   const overallScore = availableWeight > 0
     ? Math.round(categories.reduce((sum, category) => sum + (category.score || 0) * (category.weight / 100), 0))
     : null;
+  const scanErrors = categories.filter((category) => category.status === "scan_unavailable").map((category) => category.label);
   const strengths = buildPlacesStrengths(categories);
   const prioritizedIssues = buildPlacesIssues(categories);
 
   return {
     overallScore,
     availableWeight,
+    hasScanError: scanErrors.length > 0,
+    scanErrors,
     categories,
     strengths,
     prioritizedIssues,
@@ -123,6 +126,13 @@ function scorePlacesCustomerSignals(place) {
 
 function scoreWebsiteTechnicalHealth(audit) {
   if (!audit) return { score: null, metrics: [] };
+  if (audit.status === "scan_unavailable") {
+    return {
+      status: "scan_unavailable",
+      score: null,
+      metrics: [{ id: "scan-unavailable", label: "Website scan", value: null, score: null, note: audit.reason || "This check could not run this time." }]
+    };
+  }
   const noWebsite = audit.websiteUrl === null;
   const metrics = noWebsite
     ? [booleanMetric("website", "Website found", false, "Google Places did not return a website URL. No website is a measured customer-facing gap.")]

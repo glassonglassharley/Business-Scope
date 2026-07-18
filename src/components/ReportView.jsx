@@ -50,6 +50,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
           <div className="text-xs font-black uppercase tracking-[0.16em]">{BRAND}</div>
           <div className="mt-2 text-7xl font-black leading-none">{audit.score.total}</div>
           <div className="mt-1 text-sm font-black">out of 100 | {band.label}</div>
+          {audit.score?.breakdown?.hasScanError && <p className="mt-3 text-xs font-bold leading-5">Provisional: one check could not run this time.</p>}
         </div>
       </header>
 
@@ -142,8 +143,13 @@ function PlacesHealthSection({ breakdown }) {
           <p className="eyebrow">Business Health Score</p>
           <h3 className="mt-2 text-2xl font-black text-ink">Google Places scan</h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            This score uses only fields returned by Google Places. Categories without a real scanner are marked not yet measured and excluded from the weighted total.
+            This score uses measured scanner results. Categories without a real scanner are marked not yet measured; scanner outages are marked separately so the score is clear when provisional.
           </p>
+          {breakdown.hasScanError && (
+            <p className="mt-3 rounded-md border border-signal-amber/40 bg-signal-amber/10 p-3 text-sm font-bold leading-6 text-slate-700">
+              Provisional score: {breakdown.scanErrors.join(", ")} could not run this time.
+            </p>
+          )}
         </div>
         <div className="rounded-lg border border-line bg-nested-surface p-4 text-right">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Measured weight</div>
@@ -169,7 +175,11 @@ function PlacesHealthSection({ breakdown }) {
 
 function PlacesCategoryCard({ category }) {
   const measured = category.status === "measured";
+  const unavailable = category.status === "scan_unavailable";
   const band = measured ? bandForScore(category.score) : null;
+  const statusText = measured ? `Weight ${category.weight}% after renormalization` : unavailable ? "Scan unavailable - could not run this check" : "Not yet measured";
+  const scoreText = measured ? category.score : unavailable ? "Unavailable" : "Pending";
+  const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-slate-500";
 
   return (
     <div className="rounded-lg border border-line bg-surface p-4">
@@ -177,11 +187,11 @@ function PlacesCategoryCard({ category }) {
         <div>
           <h4 className="font-black text-ink">{category.label}</h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-            {measured ? `Weight ${category.weight}% after renormalization` : "Not yet measured"}
+            {statusText}
           </p>
         </div>
-        <span className={measured ? `text-2xl font-black ${band.textClass}` : "text-sm font-black text-slate-500"}>
-          {measured ? category.score : "Pending"}
+        <span className={scoreClass}>
+          {scoreText}
         </span>
       </div>
       {measured && (
