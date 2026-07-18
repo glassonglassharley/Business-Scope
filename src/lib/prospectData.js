@@ -54,6 +54,14 @@ export const ManualInputProvider = {
 };
 
 export const GooglePlacesProvider = {
+  async findCandidates({ businessName, city, coordinates } = {}) {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      return providerError("missing_api_key", "GOOGLE_PLACES_API_KEY is not set. Add it server-side to enable real Google Places scans.");
+    }
+
+    return findPlaceCandidates({ apiKey, businessName, city, coordinates });
+  },
   async getProspectData({ businessName, city, industry, placeId } = {}) {
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     if (!apiKey) {
@@ -82,6 +90,34 @@ export const GooglePlacesProvider = {
   }
 };
 
+async function findPlaceCandidates({ apiKey, businessName, city, coordinates }) {
+  const input = [businessName, city].filter(Boolean).join(" ").trim();
+  if (!input) return providerError("bad_request", "Business name or place_id is required for Google Places lookup.");
+
+  const url = new URL("https://maps.googleapis.com/maps/api/place/findplacefromtext/json");
+  url.searchParams.set("input", input);
+  url.searchParams.set("inputtype", "textquery");
+  url.searchParams.set("fields", "place_id,name,formatted_address,business_status,types");
+  if (coordinates) url.searchParams.set("locationbias", `point:${coordinates}`);
+  url.searchParams.set("key", apiKey);
+
+  const body = await fetchJson(url);
+  if (!body.ok) return providerError("api_error", body.error);
+  if (body.data.status === "ZERO_RESULTS") return { ok: true, source: "google_places", candidates: [], error: null };
+  if (body.data.status === "OVER_QUERY_LIMIT" || body.data.status === "RESOURCE_EXHAUSTED") {
+    return providerError("rate_limited", "Google Places rate limit reached. Try again later.");
+  }
+  if (body.data.status !== "OK") {
+    return providerError("api_error", body.data.error_message || `Google Places Find Place failed: ${body.data.status}`);
+  }
+
+  return {
+    ok: true,
+    source: "google_places",
+    candidates: (body.data.candidates || []).map(normalizeCandidate),
+    error: null
+  };
+}
 async function findPlaceId({ apiKey, businessName, city }) {
   const input = [businessName, city].filter(Boolean).join(" ").trim();
   if (!input) return providerError("bad_request", "Business name or place_id is required for Google Places lookup.");
@@ -150,6 +186,15 @@ async function fetchJson(url) {
   }
 }
 
+function normalizeCandidate(candidate = {}) {
+  return {
+    placeId: candidate.place_id || null,
+    name: candidate.name || "Unknown business",
+    address: candidate.formatted_address || "Address not shown",
+    businessStatus: candidate.business_status || null,
+    types: Array.isArray(candidate.types) ? candidate.types : []
+  };
+}
 function normalizePlace(place = {}, fallback = {}) {
   return {
     placeId: place.place_id || null,
@@ -235,3 +280,4 @@ function providerError(code, message) {
     error: { code, message }
   };
 }
+

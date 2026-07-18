@@ -90,7 +90,7 @@ export default function Home() {
       </header>
 
       <div className="mx-auto max-w-7xl px-5 py-6">
-        {view === "splash" && <PublicHome onRequest={() => setView("request")} />}
+        {view === "splash" && <PublicHome onRequest={() => setView("request")} onAuditComplete={handleCreateAudit} />}
         {view === "request" && <VisibilitySnapshotRequest />}
 
         {ownerMode && view === "dashboard" && (
@@ -116,7 +116,7 @@ export default function Home() {
   );
 }
 
-function PublicHome({ onRequest }) {
+function PublicHome({ onRequest, onAuditComplete }) {
   return (
     <div className="grid gap-5">
       <section className="panel overflow-hidden bg-ink text-white">
@@ -131,7 +131,7 @@ function PublicHome({ onRequest }) {
             <button className="primary-button" onClick={onRequest}>Get my free {OFFER}</button>
             <a className="rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10" href="#sample-snapshot">See a sample {OFFER}</a>
           </div>
-          <BusinessSearch />
+          <BusinessSearch onAuditComplete={onAuditComplete} />
         </div>
 
         <div className="grid border-t border-white/15 bg-white/6 md:grid-cols-3">

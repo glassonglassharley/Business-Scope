@@ -10,6 +10,20 @@ export async function POST(request) {
   }
 
   try {
+    if (body.mode === "candidates") {
+      const candidatesResult = await GooglePlacesProvider.findCandidates({
+        businessName: body.businessName,
+        city: body.city,
+        coordinates: body.coordinates
+      });
+
+      if (!candidatesResult.ok) {
+        return Response.json(candidatesResult, { status: statusForPlacesError(candidatesResult.error?.code) });
+      }
+
+      return Response.json(candidatesResult);
+    }
+
     const result = await GooglePlacesProvider.getProspectData({
       businessName: body.businessName,
       city: body.city,
@@ -18,8 +32,7 @@ export async function POST(request) {
     });
 
     if (!result.ok) {
-      const status = result.error?.code === "missing_api_key" ? 503 : result.error?.code === "bad_request" ? 400 : result.error?.code === "not_found" ? 404 : result.error?.code === "rate_limited" ? 429 : 502;
-      return Response.json(result, { status });
+      return Response.json(result, { status: statusForPlacesError(result.error?.code) });
     }
 
     const scoreBreakdown = calculateBusinessHealthScore(result.prospect);
@@ -40,4 +53,7 @@ export async function POST(request) {
       }
     }, { status: 502 });
   }
+}
+function statusForPlacesError(code) {
+  return code === "missing_api_key" ? 503 : code === "bad_request" ? 400 : code === "not_found" ? 404 : code === "rate_limited" ? 429 : 502;
 }
