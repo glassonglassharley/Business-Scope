@@ -18,7 +18,7 @@ module.exports = {
         line: COLORS.line
       },
       boxShadow: {
-        soft: "none"
+        soft: "0 18px 50px rgba(14, 22, 38, 0.08)"
       }
     }
   },

@@ -31,24 +31,24 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
   }
 
   return (
-    <article className="print-page mx-auto max-w-5xl overflow-hidden rounded-lg border border-line bg-surface ">
-      <div className="no-print flex flex-wrap justify-end gap-2 border-b border-line bg-paper px-5 py-4">
-        {!prospectMode && <button className="secondary-button py-2" onClick={copyLink}>{copyStatus}</button>}
-        <button className="primary-button py-2" onClick={() => window.print()}>Export PDF</button>
+    <article className="print-page mx-auto max-w-5xl overflow-hidden rounded-lg border border-line bg-surface shadow-soft">
+      <div className="no-print grid gap-2 border-b border-line bg-paper px-4 py-4 sm:flex sm:justify-end sm:px-5">
+        {!prospectMode && <button className="secondary-button w-full py-2 sm:w-auto" onClick={copyLink}>{copyStatus}</button>}
+        <button className="primary-button w-full py-2 sm:w-auto" onClick={() => window.print()}>Export PDF</button>
       </div>
 
-      <header className="grid gap-6 border-b border-line p-7 md:grid-cols-[1fr_240px] md:items-center">
+      <header className="grid gap-5 border-b border-line p-5 sm:p-7 md:grid-cols-[1fr_240px] md:items-center">
         <div>
           <p className="eyebrow">Snapshot</p>
-          <h2 className="mt-2 text-4xl font-black tracking-tight text-ink">{audit.businessName}</h2>
+          <h2 className="mt-2 break-words text-3xl font-black tracking-tight text-ink sm:text-4xl">{audit.businessName}</h2>
           <p className="mt-2 text-base font-semibold text-slate-600">
             {audit.industry} in {audit.city} | Prepared {formatDate(audit.createdAt)}
           </p>
-          <p className={`mt-5 max-w-3xl text-xl font-black ${band.textClass}`}>{band.verdict}</p>
+          <p className={`mt-5 max-w-3xl text-lg font-black sm:text-xl ${band.textClass}`}>{band.verdict}</p>
         </div>
-        <div className={`rounded-lg border-2 p-5 text-center ${band.panelClass}`}>
+        <div className={`w-full rounded-lg border-2 p-5 text-center sm:w-auto ${band.panelClass}`}>
           <div className="text-xs font-black uppercase tracking-[0.16em]">{BRAND}</div>
-          <div className="mt-2 text-7xl font-black leading-none">{audit.score.total}</div>
+          <div className="mt-2 text-6xl font-black leading-none sm:text-7xl">{audit.score.total}</div>
           <div className="mt-1 text-sm font-black">out of 100 | {band.label}</div>
           {audit.score?.breakdown?.hasScanError && <p className="mt-3 text-xs font-bold leading-5">Provisional: one check could not run this time.</p>}
         </div>
@@ -60,7 +60,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
         <Insight label="Likely customer impact" value={isFoodBusiness ? "Lost orders and visits" : "Lost calls and quotes"} />
       </section>
 
-      <section className="print-break-inside border-b border-line p-7">
+      <section className="print-break-inside border-b border-line p-5 sm:p-7">
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <h3 className="text-2xl font-black text-ink">Executive Read</h3>
@@ -79,7 +79,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
       </section>
 
       {!isPlacesBreakdown && (
-        <section className="print-break-inside grid gap-4 border-b border-line p-7">
+        <section className="print-break-inside grid gap-4 border-b border-line p-5 sm:p-7">
           <h3 className="text-2xl font-black text-ink">Category Breakdown</h3>
           {audit.score.categories.map((category) => (
             <ProgressRow key={category.key} category={category} label={categoryLabels[category.key].label} />
@@ -89,7 +89,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
 
       {healthScore && <BusinessHealthSection healthScore={healthScore} />}
 
-      <section className="print-break-inside border-b border-line p-7">
+      <section className="print-break-inside border-b border-line p-5 sm:p-7">
         <h3 className="text-2xl font-black text-ink">Top Gaps Costing Customers</h3>
         <div className="mt-4 grid gap-3">
           {audit.gaps.map((gap, index) => (
@@ -106,7 +106,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
         </div>
       </section>
 
-      <section className="print-break-inside border-b border-line p-7">
+      <section className="print-break-inside border-b border-line p-5 sm:p-7">
         <h3 className="text-2xl font-black text-ink">What Fixing This Looks Like</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <FixCard title="Accuracy cleanup" body={isFoodBusiness ? "Hours, phone, address, menu basics, prices, and ordering links checked across the places customers actually look." : "Hours, phone, address, service area, and offers checked across Google, the website, and major listings."} />
@@ -115,7 +115,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
         </div>
       </section>
 
-      <section className="print-break-inside border-b border-line bg-ink p-7 text-white">
+      <section className="print-break-inside border-b border-line bg-ink p-5 text-white sm:p-7">
         <div className="grid gap-5 md:grid-cols-[1fr_1.2fr] md:items-center">
           <div>
             <p className="eyebrow text-brand-soft">Suggested next step</p>
@@ -127,7 +127,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
         </div>
       </section>
 
-      <footer className="p-7 text-sm text-slate-700">
+      <footer className="p-5 text-sm text-slate-700 sm:p-7">
         <p className="font-black text-ink">Prepared by {reportPreparer}</p>
         <p className="mt-1">A few focused improvements can turn more local searches into calls, orders, quote requests, and booked jobs.</p>
       </footer>
@@ -137,8 +137,8 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
 
 function PlacesHealthSection({ breakdown }) {
   return (
-    <section className="print-break-inside border-b border-line p-7">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section className="print-break-inside border-b border-line p-5 sm:p-7">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Business Health Score</p>
           <h3 className="mt-2 text-2xl font-black text-ink">Google Places scan</h3>
@@ -151,7 +151,7 @@ function PlacesHealthSection({ breakdown }) {
             </p>
           )}
         </div>
-        <div className="rounded-lg border border-line bg-nested-surface p-4 text-right">
+        <div className="rounded-lg border border-line bg-nested-surface p-4 text-left sm:text-right">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Overall score</div>
           <div className="mt-1 text-3xl font-black text-ink">{breakdown.overallScore ?? 0}/100</div>
           <div className="mt-1 text-xs font-bold text-slate-500">Measured coverage: {breakdown.availableWeight}/100</div>
@@ -183,8 +183,8 @@ function PlacesCategoryCard({ category }) {
   const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-slate-500";
 
   return (
-    <div className="rounded-lg border border-line bg-surface p-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-lg border border-line bg-surface p-4 shadow-soft">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h4 className="font-black text-ink">{category.label}</h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
@@ -202,9 +202,9 @@ function PlacesCategoryCard({ category }) {
       )}
       <div className="mt-3 grid gap-2">
         {category.metrics.map((metric) => (
-          <div key={metric.id} className="rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
+          <div key={metric.id} className="min-w-0 rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
             <div className="font-black text-ink">{metric.label}</div>
-            <div className="mt-1">{metric.score === null ? "Not available from this scan" : `${metric.score}/100`} - {metric.note}</div>
+            <div className="mt-1 break-words">{metric.score === null ? "Not available from this scan" : `${metric.score}/100`} - {metric.note}</div>
           </div>
         ))}
       </div>
@@ -225,8 +225,8 @@ function BusinessHealthSection({ healthScore }) {
   if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} />;
 
   return (
-    <section className="print-break-inside border-b border-line p-7">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section className="print-break-inside border-b border-line p-5 sm:p-7">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">Business Health Score</p>
           <h3 className="mt-2 text-2xl font-black text-ink">Multi-dimensional visibility read</h3>
@@ -234,7 +234,7 @@ function BusinessHealthSection({ healthScore }) {
             The score blends accuracy, discovery, website, freshness, customer trust, AI visibility, and technical health. Unknown data lowers confidence instead of being treated as a confirmed pass.
           </p>
         </div>
-        <div className="rounded-lg border border-line bg-nested-surface p-4 text-right">
+        <div className="rounded-lg border border-line bg-nested-surface p-4 text-left sm:text-right">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Confidence</div>
           <div className="mt-1 text-3xl font-black text-ink">{healthScore.confidence}%</div>
         </div>
@@ -281,8 +281,8 @@ function HealthCategoryCard({ category }) {
   const band = bandForScore(category.score);
 
   return (
-    <div className="rounded-lg border border-line bg-surface p-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-lg border border-line bg-surface p-4 shadow-soft">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h4 className="font-black text-ink">{category.label}</h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">

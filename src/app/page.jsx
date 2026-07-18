@@ -73,12 +73,12 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <header className="no-print sticky top-0 z-20 border-b border-line bg-surface/92 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <button className="text-left" aria-label={`${BRAND} home`} onClick={() => setView("splash")}>
-            <span className="block text-2xl font-black uppercase tracking-[0.16em] text-ink md:text-3xl">{BRAND}</span>
+            <span className="block text-2xl font-black uppercase leading-none tracking-[0.16em] text-ink md:text-3xl">{BRAND}</span>
           </button>
           {!sharedAudit && (
-            <nav className="flex flex-wrap items-center justify-end gap-2">
+            <nav className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0">
               <button className={navClass(view === "splash")} onClick={() => setView("splash")}>Home</button>
               <button className={navClass(view === "request")} onClick={() => setView("request")}>Get {OFFER_LABEL}</button>
               {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Pipeline</button>}
@@ -89,7 +89,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-5 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
         {view === "splash" && <PublicHome onRequest={() => setView("request")} onAuditComplete={handleCreateAudit} />}
         {view === "request" && <VisibilitySnapshotRequest />}
 
@@ -120,16 +120,16 @@ function PublicHome({ onRequest, onAuditComplete }) {
   return (
     <div className="grid gap-5">
       <section className="panel overflow-hidden bg-ink text-white">
-        <div className="px-7 py-7 md:px-9 md:py-9">
-          <h2 className="max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+        <div className="px-5 py-6 sm:px-7 sm:py-7 md:px-9 md:py-9">
+          <h2 className="max-w-4xl text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-6xl">
             Wrong details send ready customers <span className="text-brand-soft">somewhere else.</span>
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-200">
             {BRAND} checks the public details customers rely on before they call, visit, book, or order. You get a plain-English snapshot and the first fixes that matter.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button className="primary-button" onClick={onRequest}>Get my free {OFFER}</button>
-            <a className="rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10" href="#sample-snapshot">See a sample {OFFER}</a>
+          <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+            <button className="primary-button w-full sm:w-auto" onClick={onRequest}>Get my free {OFFER}</button>
+            <a className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10 sm:w-auto" href="#sample-snapshot">See a sample {OFFER}</a>
           </div>
           <BusinessSearch onAuditComplete={onAuditComplete} />
         </div>
@@ -144,6 +144,7 @@ function PublicHome({ onRequest, onAuditComplete }) {
       <WhatYouGet />
       <SampleVisibilitySnapshot />
       <SocialProof />
+      <FaqSection />
       <NoPressure onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -195,21 +196,21 @@ function VisibilitySnapshotRequest() {
 
   return (
     <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="panel p-7">
+      <div className="panel p-5 sm:p-7">
         <p className="eyebrow">Free {OFFER}</p>
-        <h2 className="mt-3 text-4xl font-black tracking-tight text-ink">See what customers see before they choose you.</h2>
+        <h2 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">See what customers see before they choose you.</h2>
         <p className="mt-4 leading-7 text-slate-700">
           Send the basics. We check the public details that affect trust, visibility, and action.
         </p>
       </div>
 
-      <form className="panel grid gap-4 p-7" onSubmit={submit}>
+      <form className="panel grid gap-4 p-5 sm:p-7" onSubmit={submit}>
         <Field label="Business name"><input className="input" required value={form.business} onChange={(event) => update("business", event.target.value)} /></Field>
         <Field label="City"><input className="input" required value={form.city} onChange={(event) => update("city", event.target.value)} /></Field>
         <Field label="Website or Google profile link"><input className="input" value={form.website} onChange={(event) => update("website", event.target.value)} /></Field>
         <Field label="Best email or phone"><input className="input" required value={form.contact} onChange={(event) => update("contact", event.target.value)} /></Field>
         <Field label="Anything you already know is wrong?"><textarea className="input min-h-24 resize-y" value={form.notes} onChange={(event) => update("notes", event.target.value)} /></Field>
-        <button className="primary-button justify-self-start">Request {OFFER_LABEL}</button>
+        <button className="primary-button w-full justify-self-stretch sm:w-auto sm:justify-self-start">Request {OFFER_LABEL}</button>
       </form>
     </section>
   );
@@ -364,7 +365,7 @@ function NoPressure({ onRequest }) {
       <p className="mt-2 text-sm leading-6 text-slate-700">
         The first {OFFER} is just a starting point. If the gaps are useful, we can talk about fixing them.
       </p>
-      <button className="primary-button mt-4" onClick={onRequest}>Get my free {OFFER}</button>
+      <button className="primary-button mt-4 w-full sm:w-auto" onClick={onRequest}>Get my free {OFFER}</button>
     </section>
   );
 }
@@ -497,7 +498,7 @@ function Field({ label, children }) {
 
 function navClass(active) {
   return [
-    "rounded-md border px-4 py-2 text-sm font-bold transition",
+    "shrink-0 rounded-md border px-4 py-2 text-sm font-bold transition",
     active ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink hover:border-brand hover:text-brand",
     "disabled:cursor-not-allowed disabled:opacity-40"
   ].join(" ");

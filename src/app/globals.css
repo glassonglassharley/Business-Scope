@@ -17,14 +17,15 @@
 }
 
 body {
-  @apply bg-paper text-ink;
+  @apply overflow-x-hidden bg-paper text-ink;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -42,11 +43,11 @@ button:disabled {
 
 @layer components {
   .input {
-    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20;
+    @apply w-full min-w-0 rounded-md border border-line bg-surface px-3 py-3 text-base text-ink outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/20 md:py-2 md:text-sm;
   }
 
   .panel {
-    @apply rounded-lg border border-line bg-surface;
+    @apply rounded-lg border border-line bg-surface shadow-soft;
   }
 
   .eyebrow {
@@ -54,11 +55,11 @@ button:disabled {
   }
 
   .primary-button {
-    @apply rounded-md bg-brand px-5 py-3 text-sm font-black text-white transition hover:bg-brand/90;
+    @apply inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 py-3 text-sm font-black text-white transition hover:bg-brand/90 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-60;
   }
 
   .secondary-button {
-    @apply rounded-md border border-line bg-surface px-5 py-3 text-sm font-black text-ink transition hover:border-brand hover:text-brand;
+    @apply inline-flex min-h-11 items-center justify-center rounded-md border border-line bg-surface px-5 py-3 text-sm font-black text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
   }
 }
 

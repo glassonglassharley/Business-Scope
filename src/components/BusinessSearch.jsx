@@ -152,8 +152,8 @@ export function BusinessSearch({ onAuditComplete }) {
   }
 
   return (
-    <form className="mt-6 rounded-lg border border-white/15 bg-surface p-4 text-ink shadow-soft" onSubmit={handleSubmit}>
-      <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_auto] lg:items-end">
+    <form className="mt-6 rounded-lg border border-white/15 bg-surface p-4 text-ink shadow-soft sm:p-5" onSubmit={handleSubmit}>
+      <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_minmax(190px,auto)] lg:items-end">
         <label className="block text-sm font-black text-ink">
           Business
           <input
@@ -174,15 +174,15 @@ export function BusinessSearch({ onAuditComplete }) {
           />
         </label>
 
-        <button className="primary-button min-h-12 w-full lg:w-auto" type="submit" disabled={busy}>
+        <button className="primary-button min-h-12 w-full whitespace-nowrap lg:w-auto" type="submit" disabled={busy} aria-busy={busy}>
           {status === "resolving" ? "Finding matches..." : status === "auditing" ? "Running checkup..." : "Run my free checkup"}
         </button>
       </div>
 
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <button
-            className="rounded-md border border-line bg-paper px-4 py-2 text-sm font-black text-ink transition hover:border-brand hover:text-brand"
+            className="min-h-11 rounded-md border border-line bg-paper px-4 py-2 text-sm font-black text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             type="button"
             aria-describedby="location-status"
             onClick={useCurrentLocation}
@@ -190,26 +190,26 @@ export function BusinessSearch({ onAuditComplete }) {
             Use my location
           </button>
           {query && (
-            <div className="flex flex-wrap gap-3 text-xs font-bold text-slate-600">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-600">
               <a className="hover:text-brand" href={mapsUrl} target="_blank" rel="noopener noreferrer">Check Google Maps</a>
               <a className="hover:text-brand" href={webUrl} target="_blank" rel="noopener noreferrer">Search web</a>
             </div>
           )}
         </div>
 
-        <div className="text-sm leading-6 text-slate-600" aria-live="polite">
+        <div className="min-h-6 text-sm font-semibold leading-6 text-slate-600" aria-live="polite">
           {hint || <span id="location-status">{locationStatus}</span>}
         </div>
       </div>
 
       {candidates.length > 0 && (
-        <div className="mt-4 rounded-lg border border-line bg-nested-surface p-3">
+        <div className="mt-4 rounded-lg border border-line bg-nested-surface p-3 sm:p-4">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Choose a match</p>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {candidates.map((candidate) => (
               <button
                 key={candidate.placeId}
-                className="rounded-md border border-line bg-surface p-3 text-left transition hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
+                className="min-h-20 rounded-md border border-line bg-surface p-3 text-left transition hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
                 type="button"
                 onClick={() => runAudit(candidate)}
                 disabled={busy}
