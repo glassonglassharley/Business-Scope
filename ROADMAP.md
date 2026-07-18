@@ -162,3 +162,10 @@ Do not overbuild before testing the offer.
 ## Brand Note
 
 The working brand is defined in src/lib/brand.js so naming can change in one place later.
+
+## Known follow-ups (tracked 2026-07-18)
+
+- PSI blocked in production: confirm whether the live Vercel function can reach Google's PageSpeed Insights endpoint; if it can't, Technical Health is missing real performance data (currently gracefully skipped as "Performance check unavailable").
+- businessHealthScore.ts is a live TypeScript file in a JS/JSDoc repo (imported by buildAudit.js) — convert to JS in its own isolated pass.
+- .vercel/ is tracked in git despite being in .gitignore — untrack it (git rm --cached, don't delete the folder) in a cleanup pass.
+- Turn OFF Vercel "Improve models with this project's data" toggle (Project Settings → General → Data Preferences) since this is a private commercial repo.
