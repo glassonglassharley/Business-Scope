@@ -1,3 +1,5 @@
+import { scoreReviewRating } from "@/lib/ratingScore";
+
 export type BusinessHealthCategoryKey =
   | "dataAccuracy"
   | "discoveryStrength"
@@ -178,7 +180,7 @@ const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
         const rating = scan.customerSignals?.averageRating;
         if (rating === undefined) return unknown("Average rating was not provided.");
         const outlier = rating === 5 && (scan.customerSignals?.reviewCount ?? 0) > 100;
-        return explained(clampScore(((rating - 3) / 2) * 100), `Average rating is ${rating.toFixed(1)} out of 5.`, true, outlier ? 0.8 : 1, outlier, outlier ? "A perfect rating with high review volume is possible, but worth manually verifying." : undefined);
+        return explained(scoreReviewRating(rating) ?? UNKNOWN_SCORE, `Average rating is ${rating.toFixed(1)} out of 5.`, true, outlier ? 0.8 : 1, outlier, outlier ? "A perfect rating with high review volume is possible, but worth manually verifying." : undefined);
       }),
       metric("responseRate", "Review response rate", 25, "Easy", "1-2 hours", (scan) => {
         const rate = scan.customerSignals?.reviewResponseRate;

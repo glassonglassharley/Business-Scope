@@ -152,8 +152,9 @@ function PlacesHealthSection({ breakdown }) {
           )}
         </div>
         <div className="rounded-lg border border-line bg-nested-surface p-4 text-right">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Measured weight</div>
-          <div className="mt-1 text-3xl font-black text-ink">{breakdown.availableWeight}/100</div>
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Overall score</div>
+          <div className="mt-1 text-3xl font-black text-ink">{breakdown.overallScore ?? 0}/100</div>
+          <div className="mt-1 text-xs font-bold text-slate-500">Measured coverage: {breakdown.availableWeight}/100</div>
         </div>
       </div>
 

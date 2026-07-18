@@ -1,3 +1,4 @@
+import { ratingNeedsAttention, scoreReviewRating } from "@/lib/ratingScore";
 import { getScoringCategories } from "@/lib/scoringConfig";
 
 export function calculateScore(prospect) {
@@ -117,8 +118,8 @@ function scorePlacesDiscovery(place) {
 function scorePlacesCustomerSignals(place) {
   if (!place) return { score: null, metrics: [] };
   const metrics = [
-    numberMetric("rating", "Average rating", place.rating, scoreRating(place.rating), "Low ratings reduce trust before a customer calls."),
-    numberMetric("reviews", "Review count", place.reviewCount, scoreReviewCount(place.reviewCount), "Low review volume makes the business easier to skip.")
+    numberMetric("rating", "Average rating", place.rating, scoreRating(place.rating), ratingNote(place.rating)),
+    numberMetric("reviews", "Review count", place.reviewCount, scoreReviewCount(place.reviewCount), reviewCountNote(place.reviewCount))
   ];
   return { score: averageMetricScore(metrics), metrics };
 }
@@ -146,8 +147,8 @@ function scoreWebsiteTechnicalHealth(audit) {
         nullableBooleanMetric("viewport", "Mobile viewport", audit.html?.viewportPresent ?? null, audit.html?.reason || "Mobile viewport markup helps the site render properly on phones."),
         nullableBooleanMetric("h1", "Single H1", audit.html?.singleH1 ?? null, audit.html?.reason || "A single main heading keeps the page structure clear."),
         nullableBooleanMetric("favicon", "Favicon present", audit.html?.faviconPresent ?? null, audit.html?.reason || "A favicon is a small trust and polish signal."),
-        numberMetric("performance", "Mobile performance", audit.performance?.performanceScore, audit.performance?.performanceScore, audit.performance?.reason || "PageSpeed Insights mobile performance score."),
-        nullableBooleanMetric("mobile", "Mobile usability signal", audit.performance?.mobileFriendly ?? null, audit.performance?.reason || "PageSpeed Insights viewport/mobile signal."),
+        numberMetric("performance", "Mobile performance", audit.performance?.performanceScore, audit.performance?.performanceScore, performanceNote(audit.performance?.reason)),
+        nullableBooleanMetric("mobile", "Mobile usability signal", audit.performance?.mobileFriendly ?? null, performanceNote(audit.performance?.reason)),
         nullableBooleanMetric("phoneMatch", "Website phone matches Google", audit.nap?.phoneMatches ?? null, audit.nap?.reason || "The Google phone number should appear on the website."),
         nullableBooleanMetric("addressMatch", "Website address matches Google", audit.nap?.addressMatches ?? null, audit.nap?.reason || "The Google address should appear on the website when applicable.")
       ];
@@ -185,8 +186,27 @@ function averageMetricScore(metrics) {
 }
 
 function scoreRating(rating) {
-  if (typeof rating !== "number") return null;
-  return Math.round(clamp((rating - 3) / 2, 0, 1) * 100);
+  return scoreReviewRating(rating);
+}
+
+function ratingNote(rating) {
+  const score = scoreReviewRating(rating);
+  if (score === null) return "Average rating was not available from this scan.";
+  return score >= 75 ? "Strong ratings help customers trust the business before they call." : "Low ratings reduce trust before a customer calls.";
+}
+
+function reviewCountNote(count) {
+  const score = scoreReviewCount(count);
+  if (score === null) return "Review count was not available from this scan.";
+  return score >= 75 ? "Strong review volume makes the business easier to trust." : "Low review volume makes the business easier to skip.";
+}
+
+function performanceNote(reason) {
+  if (!reason) return "PageSpeed Insights mobile performance score.";
+  if (/blocked|pagespeedonline|google\.chrome|google_psi_api_key|api key/i.test(reason)) {
+    return "Performance check unavailable from this scan.";
+  }
+  return reason;
 }
 
 function scoreReviewCount(count) {
@@ -206,7 +226,7 @@ function buildPlacesStrengths(categories) {
 function buildPlacesIssues(categories) {
   return categories
     .flatMap((category) => category.metrics
-      .filter((metric) => typeof metric.score === "number" && metric.score < 75)
+      .filter((metric) => shouldCreatePlacesIssue(category, metric))
       .map((metric) => ({
         id: `${category.key}-${metric.id}`,
         category: category.key,
@@ -218,6 +238,17 @@ function buildPlacesIssues(categories) {
     .slice(0, 10);
 }
 
+
+function shouldCreatePlacesIssue(category, metric) {
+  if (typeof metric.score !== "number") return false;
+
+  if (category.key === "customerSignals" && metric.id === "rating") {
+    const reviewCount = category.metrics.find((item) => item.id === "reviews")?.value ?? 0;
+    return ratingNeedsAttention(metric.value, reviewCount);
+  }
+
+  return metric.score < 75;
+}
 function suggestedFixForPlacesMetric(categoryKey, metricId) {
   const fixes = {
     "dataAccuracy-address": "Add or correct the public address/service area on the Google listing.",
@@ -323,7 +354,7 @@ function scoreAccuracy(prospect, categoriesConfig) {
 
 function scoreReviews(prospect, categoriesConfig) {
   const config = categoriesConfig.reviews;
-  const ratingScore = clamp((prospect.reviews.averageRating - 3) / 2, 0, 1);
+  const ratingScore = (scoreReviewRating(prospect.reviews.averageRating) ?? 0) / 100;
   const countScore = clamp(prospect.reviews.count / 50, 0, 1);
   const lowCountPenalty = prospect.reviews.count < 10 ? 0.68 : 1;
   const points = config.max * (ratingScore * 0.55 + countScore * 0.45) * lowCountPenalty;

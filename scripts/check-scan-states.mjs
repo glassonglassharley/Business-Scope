@@ -1,10 +1,14 @@
-﻿import { readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 
 const scoringConfigSource = await readFile(new URL("../src/lib/scoringConfig.js", import.meta.url), "utf8");
+const ratingScoreSource = await readFile(new URL("../src/lib/ratingScore.js", import.meta.url), "utf8");
 const scoringConfigUrl = `data:text/javascript,${encodeURIComponent(scoringConfigSource)}`;
+const ratingScoreUrl = `data:text/javascript,${encodeURIComponent(ratingScoreSource)}`;
 const scoringSource = await readFile(new URL("../src/lib/scoring.js", import.meta.url), "utf8");
 const scoringModule = await import(`data:text/javascript,${encodeURIComponent(
-  scoringSource.replace('"@/lib/scoringConfig"', JSON.stringify(scoringConfigUrl))
+  scoringSource
+    .replace('"@/lib/scoringConfig"', JSON.stringify(scoringConfigUrl))
+    .replace('"@/lib/ratingScore"', JSON.stringify(ratingScoreUrl))
 )}`);
 const { calculateBusinessHealthScore } = scoringModule;
 
