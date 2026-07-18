@@ -15,7 +15,7 @@ const REQUESTS_KEY = "businessScope.requests.v1";
 const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
 
 const defaultSettings = {
-  preparerName: "Your Studio"
+  preparerName: BRAND
 };
 
 export default function Home() {

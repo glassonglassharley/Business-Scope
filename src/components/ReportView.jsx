@@ -9,7 +9,7 @@ import { BRAND } from "@/lib/brand";
 export function ReportView({ audit, preparerName, prospectMode = false }) {
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
   const band = bandForScore(audit.score.total);
-  const reportPreparer = preparerName || "Your Studio";
+  const reportPreparer = preparerName || BRAND;
   const categoryLabels = getScoringCategories(audit);
   const isFoodBusiness = audit.industry === "Restaurant / Food Service";
   const healthScore = audit.score?.breakdown || audit.businessHealthScore;

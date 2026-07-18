@@ -97,9 +97,9 @@ export function calculateBusinessHealthScore(prospect) {
 function scorePlacesDataAccuracy(place) {
   if (!place) return { score: null, metrics: [] };
   const metrics = [
-    booleanMetric("address", "Address present", Boolean(place.address), "Customers can confirm the location or service area."),
-    booleanMetric("phone", "Phone present", Boolean(place.phone), "Customers can call directly from the listing."),
-    booleanMetric("hours", "Hours present", Boolean(place.openingHours?.weekdayText?.length || typeof place.openingHours?.openNow === "boolean"), "Customers can tell when the business is open.")
+    booleanMetric("address", "Address present", Boolean(place.address), { good: "Customers can confirm the location or service area.", low: "The listing is missing a public address or service area, so customers may not know if this business serves them." }),
+    booleanMetric("phone", "Phone present", Boolean(place.phone), { good: "Customers can call directly from the listing.", low: "The listing is missing a phone number, so ready customers may not know how to call." }),
+    booleanMetric("hours", "Hours present", Boolean(place.openingHours?.weekdayText?.length || typeof place.openingHours?.openNow === "boolean"), { good: "Customers can tell when the business is open.", low: "The listing is missing clear hours, so customers may hesitate or show up at the wrong time." })
   ];
   return { score: averageMetricScore(metrics), metrics };
 }
@@ -107,10 +107,10 @@ function scorePlacesDataAccuracy(place) {
 function scorePlacesDiscovery(place) {
   if (!place) return { score: null, metrics: [] };
   const metrics = [
-    booleanMetric("website", "Website linked", Boolean(place.website), "A website link gives customers somewhere to verify details."),
-    nullableBooleanMetric("photos", "Photos available", typeof place.photosCount === "number" ? place.photosCount > 0 : null, "Photos help the listing feel current and credible."),
-    booleanMetric("category", "Category set", Array.isArray(place.types) && place.types.length > 0, "Google category/types help customers and Google understand the business."),
-    nullableBooleanMetric("claimed", "Claimed / verified", place.claimedOrVerified, "Places API does not always expose claimed or verified status.")
+    booleanMetric("website", "Website linked", Boolean(place.website), { good: "A website link gives customers somewhere to verify details.", low: "The Google listing does not link to a website, so customers have fewer ways to confirm details." }),
+    nullableBooleanMetric("photos", "Photos available", typeof place.photosCount === "number" ? place.photosCount > 0 : null, { good: "Photos help the listing feel current and credible.", low: "The scan did not find listing photos, so the business may look less current to customers.", unavailable: "Photo count was not available from this scan." }),
+    booleanMetric("category", "Category set", Array.isArray(place.types) && place.types.length > 0, { good: "Google category/types help customers and Google understand the business.", low: "The scan did not find a clear category, which can make the business harder to understand or discover." }),
+    nullableBooleanMetric("claimed", "Claimed / verified", place.claimedOrVerified, { good: "The listing appears claimed or verified from the available data.", low: "The listing did not appear claimed or verified from the available data.", unavailable: "Places API does not always expose claimed or verified status." })
   ];
   return { score: averageMetricScore(metrics), metrics };
 }
@@ -136,21 +136,21 @@ function scoreWebsiteTechnicalHealth(audit) {
   }
   const noWebsite = audit.websiteUrl === null;
   const metrics = noWebsite
-    ? [booleanMetric("website", "Website found", false, "Google Places did not return a website URL. No website is a measured customer-facing gap.")]
+    ? [booleanMetric("website", "Website found", false, { good: "Google returned a website URL for this business.", low: "Google Places did not return a website URL. No website is a measured customer-facing gap." })]
     : [
-        nullableBooleanMetric("reachable", "Website reachable", audit.reachable?.value ?? null, audit.reachable?.reason || "The website should load for customers without timing out."),
-        nullableBooleanMetric("https", "Served over HTTPS", audit.https?.servedOverHttps ?? null, "Customers should land on a secure HTTPS version of the site."),
-        nullableBooleanMetric("certificate", "Valid HTTPS response", audit.https?.validCertificate ?? null, "A valid certificate prevents browser trust warnings."),
-        nullableBooleanMetric("httpRedirect", "HTTP redirects to HTTPS", audit.https?.httpRedirectsToHttps ?? null, audit.https?.httpRedirectReason || "The insecure version should forward customers to HTTPS."),
-        nullableBooleanMetric("title", "Homepage title", audit.html?.titlePresent ?? null, audit.html?.reason || "A clear title helps customers and search engines understand the page."),
-        nullableBooleanMetric("description", "Meta description", audit.html?.metaDescriptionPresent ?? null, audit.html?.reason || "A description gives searchers a clearer reason to click."),
-        nullableBooleanMetric("viewport", "Mobile viewport", audit.html?.viewportPresent ?? null, audit.html?.reason || "Mobile viewport markup helps the site render properly on phones."),
-        nullableBooleanMetric("h1", "Single H1", audit.html?.singleH1 ?? null, audit.html?.reason || "A single main heading keeps the page structure clear."),
-        nullableBooleanMetric("favicon", "Favicon present", audit.html?.faviconPresent ?? null, audit.html?.reason || "A favicon is a small trust and polish signal."),
+        nullableBooleanMetric("reachable", "Website reachable", audit.reachable?.value ?? null, { good: "The website loaded for this scan.", low: audit.reachable?.reason || "The website did not load reliably for this scan.", unavailable: audit.reachable?.reason || "Website reachability was not available from this scan." }),
+        nullableBooleanMetric("https", "Served over HTTPS", audit.https?.servedOverHttps ?? null, { good: "Customers land on a secure HTTPS version of the site.", low: "The site is not served over HTTPS, so customers may see a not-secure warning.", unavailable: "HTTPS status was not available from this scan." }),
+        nullableBooleanMetric("certificate", "Valid HTTPS response", audit.https?.validCertificate ?? null, { good: "The HTTPS certificate responded cleanly for this scan.", low: "The HTTPS certificate did not validate cleanly, which can trigger browser trust warnings.", unavailable: "Certificate status was not available from this scan." }),
+        nullableBooleanMetric("httpRedirect", "HTTP redirects to HTTPS", audit.https?.httpRedirectsToHttps ?? null, { good: "The insecure HTTP version forwards customers to HTTPS.", low: audit.https?.httpRedirectReason || "The insecure HTTP version did not forward customers to HTTPS.", unavailable: audit.https?.httpRedirectReason || "HTTP redirect status was not available from this scan." }),
+        nullableBooleanMetric("title", "Homepage title", audit.html?.titlePresent ?? null, { good: "The homepage has a clear title for customers and search engines.", low: audit.html?.reason || "The homepage is missing a clear title.", unavailable: audit.html?.reason || "Homepage title status was not available from this scan." }),
+        nullableBooleanMetric("description", "Meta description", audit.html?.metaDescriptionPresent ?? null, { good: "The page has a meta description that can help searchers understand the result.", low: audit.html?.reason || "The page is missing a meta description, so searchers may get less helpful preview text.", unavailable: audit.html?.reason || "Meta description status was not available from this scan." }),
+        nullableBooleanMetric("viewport", "Mobile viewport", audit.html?.viewportPresent ?? null, { good: "Mobile viewport markup helps the site render properly on phones.", low: audit.html?.reason || "The homepage is missing mobile viewport markup, so phone layouts may render poorly.", unavailable: audit.html?.reason || "Mobile viewport status was not available from this scan." }),
+        nullableBooleanMetric("h1", "Single H1", audit.html?.singleH1 ?? null, { good: "A single main heading keeps the page structure clear.", low: audit.html?.reason || "The homepage does not have one clear main heading.", unavailable: audit.html?.reason || "Main-heading status was not available from this scan." }),
+        nullableBooleanMetric("favicon", "Favicon present", audit.html?.faviconPresent ?? null, { good: "A favicon gives the site a small but useful trust and polish signal.", low: audit.html?.reason || "The site is missing a favicon, which can make it feel less polished in browser tabs and search surfaces.", unavailable: audit.html?.reason || "Favicon status was not available from this scan." }),
         numberMetric("performance", "Mobile performance", audit.performance?.performanceScore, audit.performance?.performanceScore, performanceNote(audit.performance?.reason)),
-        nullableBooleanMetric("mobile", "Mobile usability signal", audit.performance?.mobileFriendly ?? null, performanceNote(audit.performance?.reason)),
-        nullableBooleanMetric("phoneMatch", "Website phone matches Google", audit.nap?.phoneMatches ?? null, audit.nap?.reason || "The Google phone number should appear on the website."),
-        nullableBooleanMetric("addressMatch", "Website address matches Google", audit.nap?.addressMatches ?? null, audit.nap?.reason || "The Google address should appear on the website when applicable.")
+        nullableBooleanMetric("mobile", "Mobile usability signal", audit.performance?.mobileFriendly ?? null, { good: "The available performance data suggests the page is usable on mobile.", low: "The available performance data suggests mobile visitors may have trouble using the page.", unavailable: performanceNote(audit.performance?.reason) }),
+        nullableBooleanMetric("phoneMatch", "Website phone matches Google", audit.nap?.phoneMatches ?? null, { good: "The Google phone number appears on the website.", low: audit.nap?.reason || "The website phone number conflicts with Google.", unavailable: audit.nap?.reason || "Could not confirm the Google phone number on the homepage." }),
+        nullableBooleanMetric("addressMatch", "Website address matches Google", audit.nap?.addressMatches ?? null, { good: "The Google address appears on the website.", low: audit.nap?.reason || "The website address conflicts with Google.", unavailable: audit.nap?.reason || "Could not confirm the Google address on the homepage." })
       ];
 
   return { score: averageMetricScore(metrics), metrics };
@@ -167,16 +167,26 @@ function notYetScanned(category, note) {
   };
 }
 
-function booleanMetric(id, label, value, note) {
-  return { id, label, value, score: value ? 100 : 0, note };
+function booleanMetric(id, label, value, noteCopy) {
+  const score = value ? 100 : 0;
+  return { id, label, value, score, note: noteForScore(score, noteCopy) };
 }
 
-function nullableBooleanMetric(id, label, value, note) {
-  return { id, label, value, score: value === null ? null : value ? 100 : 0, note };
+function nullableBooleanMetric(id, label, value, noteCopy) {
+  const score = value === null ? null : value ? 100 : 0;
+  return { id, label, value, score, note: noteForScore(score, noteCopy) };
 }
 
-function numberMetric(id, label, value, score, note) {
-  return { id, label, value: typeof value === "number" ? value : null, score, note };
+function numberMetric(id, label, value, score, noteCopy) {
+  return { id, label, value: typeof value === "number" ? value : null, score, note: noteForScore(score, noteCopy) };
+}
+
+function noteForScore(score, copy) {
+  if (typeof copy === "string") return copy;
+  if (score === null) return copy.unavailable || "Not available from this scan.";
+  if (score >= 71) return copy.good;
+  if (score <= 40) return copy.low;
+  return copy.mid || copy.good;
 }
 
 function averageMetricScore(metrics) {
@@ -192,13 +202,21 @@ function scoreRating(rating) {
 function ratingNote(rating) {
   const score = scoreReviewRating(rating);
   if (score === null) return "Average rating was not available from this scan.";
-  return score >= 75 ? "Strong ratings help customers trust the business before they call." : "Low ratings reduce trust before a customer calls.";
+  return noteForScore(score, {
+    good: "Strong ratings help customers trust the business before they call.",
+    mid: "Ratings are decent, with room to build more confidence before customers call.",
+    low: "The average rating is low enough that it may reduce trust before a customer calls."
+  });
 }
 
 function reviewCountNote(count) {
   const score = scoreReviewCount(count);
   if (score === null) return "Review count was not available from this scan.";
-  return score >= 75 ? "Strong review volume makes the business easier to trust." : "Low review volume makes the business easier to skip.";
+  return noteForScore(score, {
+    good: "Strong review volume makes the business easier to trust.",
+    mid: "Review volume is building, but more recent proof would make the business easier to choose.",
+    low: "Low review volume makes the business easier to skip."
+  });
 }
 
 function performanceNote(reason) {
