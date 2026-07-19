@@ -32,12 +32,14 @@ export function calculateScore(prospect) {
 const TECHNICAL_HEALTH_BASE_WEIGHT = 12;
 // Content Freshness is a softer maintenance signal, so keep it below Technical Health.
 const CONTENT_FRESHNESS_BASE_WEIGHT = 9;
+// Phase 1: raise as more presence sources come online.
+const ONLINE_PRESENCE_BASE_WEIGHT = 8;
 
 const PLACES_CATEGORY_CONFIG = [
   { key: "dataAccuracy", label: "Data Accuracy & Consistency", baseWeight: 25, scanner: (prospect) => scorePlacesDataAccuracy(prospect?.googlePlaces || null) },
   { key: "discoveryStrength", label: "Discovery / Google Profile Strength", baseWeight: 20, scanner: (prospect) => scorePlacesDiscovery(prospect?.googlePlaces || null) },
   // Extension point: flip each scanner from null to a real function when that data source is implemented.
-  { key: "onlinePresence", label: "Online Presence", baseWeight: 15, scanner: null },
+  { key: "onlinePresence", label: "Online Presence", baseWeight: ONLINE_PRESENCE_BASE_WEIGHT, scanner: (prospect) => scoreOnlinePresence(prospect?.websiteAudit?.onlinePresence || null) },
   { key: "contentFreshness", label: "Content Freshness", baseWeight: CONTENT_FRESHNESS_BASE_WEIGHT, scanner: (prospect) => scoreContentFreshness(prospect?.websiteAudit?.contentFreshness || null, prospect?.googlePlaces || null) },
   { key: "customerSignals", label: "Customer Signals", baseWeight: 10, scanner: (prospect) => scorePlacesCustomerSignals(prospect?.googlePlaces || null) },
   { key: "aiVisibility", label: "AI Visibility", baseWeight: 10, scanner: null },
@@ -117,6 +119,55 @@ function scorePlacesDiscovery(place) {
   return { score: averageMetricScore(metrics), metrics };
 }
 
+function scoreOnlinePresence(onlinePresence) {
+  if (!onlinePresence) return { score: null, metrics: [] };
+  const sources = onlinePresence.sources || {};
+  const websiteNap = sources.websiteNap || {};
+  const yelp = sources.yelp || {};
+  const metrics = [
+    nullableBooleanMetric("websitePhone", "Website phone appears consistent", websiteNap.phoneMatches ?? null, {
+      good: "The phone number customers see on Google also appears on the website.",
+      low: "The website phone number conflicts with Google.",
+      unavailable: websiteNap.reason || "Could not confirm the Google phone number on the homepage; this stays neutral."
+    }),
+    nullableBooleanMetric("websiteAddress", "Website address appears consistent", websiteNap.addressMatches ?? null, {
+      good: "The address or service-area details from Google also appear on the website.",
+      low: "The website address conflicts with Google.",
+      unavailable: websiteNap.reason || "Could not confirm the Google address on the homepage; this stays neutral."
+    }),
+    nullableBooleanMetric("yelpPresence", "Yelp listing found", yelp.found === true ? true : null, {
+      good: "A confident Yelp listing was found, giving customers another familiar place to verify the business.",
+      low: "Yelp listing was checked and appeared missing.",
+      unavailable: yelp.reason || "Yelp presence was not available from this scan."
+    }),
+    nullableBooleanMetric("yelpName", "Yelp name matches Google", yelp.nameMatches ?? null, {
+      good: "The Yelp business name matches the Google listing closely enough to trust.",
+      low: "The Yelp business name conflicts with Google.",
+      unavailable: yelp.reason || "Yelp name consistency was not confirmed; this stays neutral."
+    }),
+    nullableBooleanMetric("yelpAddress", "Yelp address matches Google", yelp.addressMatches ?? null, {
+      good: "The Yelp address matches the Google listing closely enough to trust.",
+      low: "The Yelp address conflicts with Google.",
+      unavailable: yelp.reason || "Yelp address consistency was not confirmed; this stays neutral."
+    }),
+    nullableBooleanMetric("yelpPhone", "Yelp phone matches Google", yelp.phoneMatches ?? null, {
+      good: "The Yelp phone number matches the Google listing.",
+      low: "The Yelp phone number conflicts with Google.",
+      unavailable: yelp.reason || "Yelp phone consistency was not confirmed; this stays neutral."
+    }),
+    numberMetric("bing", "Bing local presence", null, null, {
+      unavailable: sources.bing?.reason || "Bing local presence is pending and excluded from this score."
+    }),
+    numberMetric("apple", "Apple Maps presence", null, null, {
+      unavailable: sources.apple?.reason || "Apple Maps presence is pending and excluded from this score."
+    }),
+    numberMetric("facebook", "Facebook page presence", null, null, {
+      unavailable: sources.facebook?.reason || "Facebook presence is pending and excluded from this score."
+    })
+  ];
+
+  return { score: averageMetricScore(metrics), metrics };
+}
 function scoreContentFreshness(freshness, place) {
   if (!freshness && !place) return { score: null, metrics: [] };
   const signals = freshness?.signals || {};
@@ -361,6 +412,12 @@ function suggestedFixForPlacesMetric(categoryKey, metricId) {
     "discoveryStrength-claimed": "Verify whether the Google listing is claimed in Google Business Profile.",
     "customerSignals-rating": "Find and fix the patterns behind low reviews, then respond professionally.",
     "customerSignals-reviews": "Ask recent happy customers for reviews until the business clears the trust threshold.",
+    "onlinePresence-websitePhone": "Put the same public phone number from Google on the website homepage or contact path.",
+    "onlinePresence-websiteAddress": "Put the same address or service-area language from Google on the website homepage or contact path.",
+    "onlinePresence-yelpPresence": "Claim or clean up the Yelp listing only if Yelp matters for this market.",
+    "onlinePresence-yelpName": "Update Yelp so the business name matches the Google listing.",
+    "onlinePresence-yelpAddress": "Update Yelp so the address matches the Google listing.",
+    "onlinePresence-yelpPhone": "Update Yelp so the phone number matches the Google listing.",
     "contentFreshness-copyrightYear": "Update stale footer or site template details so the website looks actively maintained.",
     "contentFreshness-pageDate": "Refresh dated homepage content or remove stale visible update dates.",
     "contentFreshness-photoVolume": "Add recent real photos of the location, work, team, products, or menu items.",

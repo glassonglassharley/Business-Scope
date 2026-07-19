@@ -1,6 +1,7 @@
 import { lookup } from "node:dns/promises";
 import net from "node:net";
 import { ContentFreshnessProvider } from "@/lib/contentFreshnessProvider";
+import { OnlinePresenceProvider } from "@/lib/onlinePresenceProvider";
 
 const REQUEST_TIMEOUT_MS = 5500;
 const PSI_TIMEOUT_MS = 7000;
@@ -15,10 +16,12 @@ export const WebsiteProvider = {
   async auditResolvedPlace(place = {}) {
     const websiteUrl = place?.website || null;
     if (!websiteUrl) {
+      const audit = noWebsiteAudit(place);
+      audit.onlinePresence = await OnlinePresenceProvider.fromExistingData({ place, websiteNap: audit.nap });
       return {
         ok: true,
         source: "website_audit",
-        audit: noWebsiteAudit(place),
+        audit,
         error: null
       };
     }
@@ -33,6 +36,8 @@ export const WebsiteProvider = {
     const html = htmlResult.html || "";
     const htmlSignals = htmlResult.ok ? parseHtmlSignals(html, parsed.url) : emptyHtmlSignals(htmlResult.error?.message || "Homepage HTML could not be measured.");
     const contentFreshness = ContentFreshnessProvider.fromExistingData({ html, place, websiteUrl: parsed.url.href });
+    const nap = buildNapSignals(html, place);
+    const onlinePresence = await OnlinePresenceProvider.fromExistingData({ place, websiteNap: nap });
     const reachability = buildReachabilitySignal(htmlResult);
     const httpUrl = toHttpUrl(parsed.url);
     const httpRedirect = httpUrl ? await checkHttpToHttpsRedirect(httpUrl) : { value: null, reason: "Website URL is not HTTPS, so HTTP to HTTPS redirect was not checked." };
@@ -54,8 +59,9 @@ export const WebsiteProvider = {
         },
         html: htmlSignals,
         contentFreshness,
+        onlinePresence,
         performance: psi,
-        nap: buildNapSignals(html, place)
+        nap
       },
       error: null
     };
