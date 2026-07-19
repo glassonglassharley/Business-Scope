@@ -12,7 +12,7 @@ export function BusinessSearch({ onAuditComplete }) {
   const [candidates, setCandidates] = useState([]);
   const [hint, setHint] = useState("");
   const [status, setStatus] = useState("idle");
-  const [locationStatus, setLocationStatus] = useState("Location not added");
+  const [locationStatus, setLocationStatus] = useState("Optional - add your area for better matches.");
 
   const query = useMemo(() => {
     return [businessName.trim(), location.trim(), coordinates].filter(Boolean).join(" ");
@@ -152,11 +152,12 @@ export function BusinessSearch({ onAuditComplete }) {
   }
 
   return (
-    <form className="mt-6 rounded-lg border border-white/15 bg-surface p-4 text-ink shadow-soft sm:p-5" onSubmit={handleSubmit}>
+    <form id="business-search" className="mt-6 scroll-mt-28 rounded-lg border border-white/15 bg-surface p-4 text-ink shadow-soft sm:p-5" onSubmit={handleSubmit}>
       <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_minmax(190px,auto)] lg:items-end">
         <label className="block text-sm font-black text-ink">
           Business
           <input
+            id="business-search-business"
             className="input mt-2 min-h-12"
             placeholder="Search a business - name + city"
             value={businessName}

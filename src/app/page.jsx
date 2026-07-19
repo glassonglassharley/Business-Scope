@@ -155,6 +155,14 @@ export default function Home() {
 }
 
 function PublicHome({ onRequest, onAuditComplete }) {
+  function focusBusinessSearch() {
+    const form = document.getElementById("business-search");
+    const input = document.getElementById("business-search-business");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    form?.scrollIntoView({ block: "start", behavior: prefersReducedMotion ? "auto" : "smooth" });
+    window.setTimeout(() => input?.focus({ preventScroll: true }), prefersReducedMotion ? 0 : 350);
+  }
+
   return (
     <div className="grid gap-5">
       <section className="panel overflow-hidden bg-ink text-white">
@@ -166,8 +174,8 @@ function PublicHome({ onRequest, onAuditComplete }) {
             {BRAND} checks the public details customers rely on before they call, visit, book, or order. You get a plain-English snapshot and the first fixes that matter.
           </p>
           <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
-            <button className="primary-button w-full sm:w-auto" onClick={onRequest}>Get my free {OFFER}</button>
-            <a className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10 sm:w-auto" href="#sample-snapshot">See a sample {OFFER}</a>
+            <button className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30 sm:w-auto" onClick={focusBusinessSearch}>Start with a business name</button>
+            <a className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white/85 transition hover:border-white hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 sm:w-auto" href="#sample-snapshot">See a sample {OFFER}</a>
           </div>
           <BusinessSearch onAuditComplete={onAuditComplete} />
         </div>
