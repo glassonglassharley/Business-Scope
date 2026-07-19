@@ -76,7 +76,7 @@ const measured = calculateBusinessHealthScore(baseProspect(measuredWebsiteAudit(
 const technicalMeasured = category(measured, "technicalHealth");
 assert(technicalMeasured.status === "measured", "Technical Health should be measured with a website audit payload.");
 assert(technicalMeasured.weight > 0, "Measured Technical Health should be included in renormalized weight.");
-assert(measured.availableWeight === 67, `Expected availableWeight 67 with Technical Health measured, got ${measured.availableWeight}.`);
+assert(measured.availableWeight === 76, `Expected availableWeight 76 with Technical Health and Content Freshness measured, got ${measured.availableWeight}.`);
 pass("measured Technical Health is included in weighted total");
 
 const unbuilt = category(measured, "onlinePresence");
@@ -128,15 +128,17 @@ assert(websiteFound?.score === 0, "No website should count as a measured negativ
 assert(noWebsite.hasScanError === false, "No website should not set hasScanError.");
 pass("no website is measured negative, not scan_unavailable");
 
-const measuredBaseWeight = 25 + 20 + 10;
+const measuredBaseWeight = 25 + 20 + 9 + 10;
 assert(unavailable.availableWeight === measuredBaseWeight, `Expected availableWeight ${measuredBaseWeight} when Technical Health unavailable, got ${unavailable.availableWeight}.`);
 const dataAccuracy = category(unavailable, "dataAccuracy");
 const discovery = category(unavailable, "discoveryStrength");
+const contentFreshness = category(unavailable, "contentFreshness");
 const customerSignals = category(unavailable, "customerSignals");
-assert(dataAccuracy.weight === 45.5, `Expected Data Accuracy weight 45.5, got ${dataAccuracy.weight}.`);
-assert(discovery.weight === 36.4, `Expected Discovery weight 36.4, got ${discovery.weight}.`);
-assert(customerSignals.weight === 18.2, `Expected Customer Signals weight 18.2, got ${customerSignals.weight}.`);
-const expectedOverall = Math.round(dataAccuracy.score * 0.455 + discovery.score * 0.364 + customerSignals.score * 0.182);
+assert(dataAccuracy.weight === 39.1, `Expected Data Accuracy weight 39.1, got ${dataAccuracy.weight}.`);
+assert(discovery.weight === 31.3, `Expected Discovery weight 31.3, got ${discovery.weight}.`);
+assert(contentFreshness.weight === 14.1, `Expected Content Freshness weight 14.1, got ${contentFreshness.weight}.`);
+assert(customerSignals.weight === 15.6, `Expected Customer Signals weight 15.6, got ${customerSignals.weight}.`);
+const expectedOverall = Math.round(dataAccuracy.score * 0.391 + discovery.score * 0.313 + contentFreshness.score * 0.141 + customerSignals.score * 0.156);
 assert(unavailable.overallScore === expectedOverall, `Expected overall ${expectedOverall}, got ${unavailable.overallScore}.`);
 pass("scan_unavailable renormalizes over measured categories only and is not scored as zero");
 

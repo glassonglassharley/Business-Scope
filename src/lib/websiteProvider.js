@@ -1,5 +1,6 @@
 import { lookup } from "node:dns/promises";
 import net from "node:net";
+import { ContentFreshnessProvider } from "@/lib/contentFreshnessProvider";
 
 const REQUEST_TIMEOUT_MS = 5500;
 const PSI_TIMEOUT_MS = 7000;
@@ -31,6 +32,7 @@ export const WebsiteProvider = {
 
     const html = htmlResult.html || "";
     const htmlSignals = htmlResult.ok ? parseHtmlSignals(html, parsed.url) : emptyHtmlSignals(htmlResult.error?.message || "Homepage HTML could not be measured.");
+    const contentFreshness = ContentFreshnessProvider.fromExistingData({ html, place, websiteUrl: parsed.url.href });
     const reachability = buildReachabilitySignal(htmlResult);
     const httpUrl = toHttpUrl(parsed.url);
     const httpRedirect = httpUrl ? await checkHttpToHttpsRedirect(httpUrl) : { value: null, reason: "Website URL is not HTTPS, so HTTP to HTTPS redirect was not checked." };
@@ -51,6 +53,7 @@ export const WebsiteProvider = {
           httpRedirectReason: httpRedirect.reason
         },
         html: htmlSignals,
+        contentFreshness,
         performance: psi,
         nap: buildNapSignals(html, place)
       },
@@ -68,6 +71,7 @@ function noWebsiteAudit(place) {
     reachable: { value: false, status: null, timingMs: null, reason: "Google Places did not return a website URL." },
     https: { servedOverHttps: false, validCertificate: null, httpRedirectsToHttps: null, httpRedirectReason: "No website URL was available to test." },
     html: emptyHtmlSignals("No website URL was available to fetch."),
+    contentFreshness: ContentFreshnessProvider.fromExistingData({ html: "", place, websiteUrl: null }),
     performance: skippedPerformance("No website URL was available to test."),
     nap: {
       phoneMatches: null,

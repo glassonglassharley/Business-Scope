@@ -30,13 +30,15 @@ export function calculateScore(prospect) {
 
 // Technical Health is intentionally easy to tune as the website scanner matures.
 const TECHNICAL_HEALTH_BASE_WEIGHT = 12;
+// Content Freshness is a softer maintenance signal, so keep it below Technical Health.
+const CONTENT_FRESHNESS_BASE_WEIGHT = 9;
 
 const PLACES_CATEGORY_CONFIG = [
   { key: "dataAccuracy", label: "Data Accuracy & Consistency", baseWeight: 25, scanner: (prospect) => scorePlacesDataAccuracy(prospect?.googlePlaces || null) },
   { key: "discoveryStrength", label: "Discovery / Google Profile Strength", baseWeight: 20, scanner: (prospect) => scorePlacesDiscovery(prospect?.googlePlaces || null) },
   // Extension point: flip each scanner from null to a real function when that data source is implemented.
   { key: "onlinePresence", label: "Online Presence", baseWeight: 15, scanner: null },
-  { key: "contentFreshness", label: "Content Freshness", baseWeight: 15, scanner: null },
+  { key: "contentFreshness", label: "Content Freshness", baseWeight: CONTENT_FRESHNESS_BASE_WEIGHT, scanner: (prospect) => scoreContentFreshness(prospect?.websiteAudit?.contentFreshness || null, prospect?.googlePlaces || null) },
   { key: "customerSignals", label: "Customer Signals", baseWeight: 10, scanner: (prospect) => scorePlacesCustomerSignals(prospect?.googlePlaces || null) },
   { key: "aiVisibility", label: "AI Visibility", baseWeight: 10, scanner: null },
   { key: "technicalHealth", label: "Technical Health", baseWeight: TECHNICAL_HEALTH_BASE_WEIGHT, scanner: (prospect) => scoreWebsiteTechnicalHealth(prospect?.websiteAudit || null) }
@@ -115,6 +117,51 @@ function scorePlacesDiscovery(place) {
   return { score: averageMetricScore(metrics), metrics };
 }
 
+function scoreContentFreshness(freshness, place) {
+  if (!freshness && !place) return { score: null, metrics: [] };
+  const signals = freshness?.signals || {};
+  const hoursSignal = signals.hoursSpecificity || scoreHoursSpecificityForPlace(place?.openingHours);
+  const metrics = [
+    numberMetric("copyrightYear", "Copyright year", signals.copyright?.year ?? null, scoreCopyrightAge(signals.copyright), {
+      good: "The homepage copyright year looks current.",
+      mid: "The homepage copyright year is a little dated, but not a major concern by itself.",
+      low: "The homepage copyright year looks stale, which can make the site feel neglected.",
+      unavailable: signals.copyright?.reason || "No copyright year was found; this is neutral because many current sites do not show one."
+    }),
+    numberMetric("pageDate", "Updated date signal", signals.pageDate?.year ?? null, scoreDateAge(signals.pageDate), {
+      good: "The homepage includes a recent updated or published date signal.",
+      mid: "The homepage date signal is present but not very recent.",
+      low: "The homepage date signal looks old enough to make the site feel stale.",
+      unavailable: signals.pageDate?.reason || "No clear page update date was found; this stays neutral."
+    }),
+    numberMetric("photoVolume", "Google photo volume", signals.googlePhotos?.count ?? place?.photosCount ?? null, scorePhotoVolume(signals.googlePhotos?.count ?? place?.photosCount), {
+      good: "Google has enough photos to make the business feel active and real.",
+      mid: "Google has some photos, but more recent real photos would make the listing stronger.",
+      low: "Google did not return listing photos, so the business may look less active to customers.",
+      unavailable: signals.googlePhotos?.reason || "Google photo count was not available from this scan."
+    }),
+    numberMetric("photoRecency", "Google photo recency", null, null, {
+      unavailable: "Google Places did not provide photo dates, so photo recency is pending rather than guessed."
+    }),
+    numberMetric("hoursSpecificity", "Hours specificity", hoursSignal?.value ? hoursSpecificityValue(hoursSignal) : null, hoursSignal?.score ?? null, {
+      good: "Google shows a specific weekly schedule, which helps customers know when to act.",
+      mid: hoursSignal?.reason || "Google shows partial hours information, but the schedule could be clearer.",
+      low: hoursSignal?.reason || "Google did not show specific hours, which can make the business look less maintained.",
+      unavailable: "Hours specificity was not available from this scan."
+    }),
+    numberMetric("posts", "Google posts or updates", null, null, {
+      unavailable: "Google post/update activity is pending because this scan does not fetch that data yet."
+    }),
+    numberMetric("qaActivity", "Q&A activity", null, null, {
+      unavailable: "Q&A activity is pending because this scan does not fetch that data yet."
+    }),
+    numberMetric("reviewRecency", "Review recency", null, null, {
+      unavailable: "Review recency is pending because Google Places did not provide review dates in this scan."
+    })
+  ];
+
+  return { score: averageMetricScore(metrics), metrics };
+}
 function scorePlacesCustomerSignals(place) {
   if (!place) return { score: null, metrics: [] };
   const metrics = [
@@ -227,6 +274,42 @@ function performanceNote(reason) {
   return reason;
 }
 
+function scoreCopyrightAge(signal) {
+  if (!signal?.found || typeof signal.age !== "number") return null;
+  return scoreFreshnessAge(signal.age);
+}
+
+function scoreDateAge(signal) {
+  if (!signal?.found || typeof signal.age !== "number") return null;
+  return scoreFreshnessAge(signal.age);
+}
+
+function scoreFreshnessAge(ageYears) {
+  if (ageYears <= 0) return 100;
+  if (ageYears === 1) return 80;
+  if (ageYears === 2) return 60;
+  if (ageYears <= 4) return 40;
+  return 20;
+}
+
+function scorePhotoVolume(count) {
+  if (typeof count !== "number") return null;
+  if (count >= 8) return 100;
+  if (count >= 4) return 85;
+  if (count > 0) return 65;
+  return 0;
+}
+
+function scoreHoursSpecificityForPlace(openingHours) {
+  const weekdayText = openingHours?.weekdayText;
+  if (Array.isArray(weekdayText) && weekdayText.length >= 5) return { value: "specific_hours", score: 100, reason: null };
+  if (Array.isArray(weekdayText) && weekdayText.length > 0) return { value: "partial_hours", score: 75, reason: "Some business hours were available, but the weekly schedule looked incomplete." };
+  if (typeof openingHours?.openNow === "boolean") return { value: "open_now_only", score: 55, reason: "Google showed open-now status, but not a full weekly schedule." };
+  return { value: "missing_hours", score: 0, reason: "No specific business hours were available from Google Places." };
+}
+function hoursSpecificityValue(signal) {
+  return signal.value === "specific_hours" ? 7 : signal.value === "partial_hours" ? 3 : signal.value === "open_now_only" ? 1 : 0;
+}
 function scoreReviewCount(count) {
   if (typeof count !== "number") return null;
   const base = clamp(count / 75, 0, 1) * 100;
@@ -278,6 +361,10 @@ function suggestedFixForPlacesMetric(categoryKey, metricId) {
     "discoveryStrength-claimed": "Verify whether the Google listing is claimed in Google Business Profile.",
     "customerSignals-rating": "Find and fix the patterns behind low reviews, then respond professionally.",
     "customerSignals-reviews": "Ask recent happy customers for reviews until the business clears the trust threshold.",
+    "contentFreshness-copyrightYear": "Update stale footer or site template details so the website looks actively maintained.",
+    "contentFreshness-pageDate": "Refresh dated homepage content or remove stale visible update dates.",
+    "contentFreshness-photoVolume": "Add recent real photos of the location, work, team, products, or menu items.",
+    "contentFreshness-hoursSpecificity": "Add a complete weekly schedule in Google Business Profile, including special hours when needed.",
     "technicalHealth-website": "Add a working website URL to the Google listing so customers have somewhere to confirm details.",
     "technicalHealth-reachable": "Fix hosting or DNS so the website loads reliably for customers.",
     "technicalHealth-https": "Move the site to HTTPS so browsers show it as secure.",
