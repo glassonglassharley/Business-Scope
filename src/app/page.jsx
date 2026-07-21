@@ -190,7 +190,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
       <WhatYouGet />
       <SampleVisibilitySnapshot />
       <SocialProof />
-      <FaqSection />
       <NoPressure onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -381,59 +380,6 @@ function SocialProof() {
   );
 }
 
-function FaqSection() {
-  return (
-    <section className="panel overflow-hidden">
-      <div className="border-b border-line bg-surface p-5">
-        <p className="eyebrow">Questions</p>
-        <h3 className="mt-3 text-2xl font-black text-ink">How the snapshot works</h3>
-      </div>
-      <div className="divide-y divide-line bg-surface">
-        <FaqItem
-          question="How is my score calculated?"
-          answer="Your snapshot looks at the things a customer actually notices before they call, visit, or order: grouped into a few areas: your Google Business Profile, the accuracy of your details (hours, phone, address), your reviews, your website, how easily you show up in local &quot;near me&quot; searches, and how simple it is for someone to reach you. Each area is weighted and adds up to a single 0-100 score. Restaurants and food businesses get an extra area for menus and online ordering."
-        />
-        <FaqItem
-          question={`Does ${BRAND} scan my business automatically?`}
-          answer="Not yet, and that's on purpose. Right now a real person reviews your business the way a customer would and records what they find, so the score reflects a human judgment call, not a bot guessing. Automatic pre-filling (pulling some details straight from Google) is something we may add later, but the snapshot itself will always be a plain-English read, not a raw data dump."
-        />
-        <FaqItem
-          question="What do the colors mean?"
-          answer="Green (71-100) means that area is working. Amber (41-70) means it needs attention. Red (0-40) means it's likely costing you customers right now."
-        />
-        <FaqItem
-          question="Is the sample on the homepage a real business?"
-          answer="No, it's an illustrative example so you can see what a finished snapshot looks like. Your own snapshot is based on your actual details."
-        />
-        <details className="group p-5">
-          <summary className="cursor-pointer list-none font-black text-ink focus:outline-none focus:ring-2 focus:ring-brand/20">
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="text-brand">+</span>
-              How long does it take and what does it cost?
-            </span>
-          </summary>
-          <p className="mt-3 text-sm leading-6 text-slate-700">
-            TODO: Add the real timing and pricing answer before publishing this FAQ item.
-          </p>
-        </details>
-      </div>
-    </section>
-  );
-}
-
-function FaqItem({ question, answer }) {
-  return (
-    <details className="group p-5">
-      <summary className="cursor-pointer list-none font-black text-ink focus:outline-none focus:ring-2 focus:ring-brand/20">
-        <span className="inline-flex items-center gap-2">
-          <span aria-hidden="true" className="text-brand">+</span>
-          {question}
-        </span>
-      </summary>
-      <p className="mt-3 text-sm leading-6 text-slate-700">{answer}</p>
-    </details>
-  );
-}
 function NoPressure({ onRequest }) {
   return (
     <section className="panel p-5">
