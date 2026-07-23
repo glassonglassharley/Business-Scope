@@ -119,7 +119,7 @@ export default function Home() {
             <nav className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0">
               <button className={navClass(view === "splash")} onClick={() => setView("splash")}>Home</button>
               <button className={navClass(view === "request")} onClick={() => setView("request")}>Get {OFFER_LABEL}</button>
-              {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Pipeline</button>}
+              {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Checkups</button>}
               {ownerMode && <button className={navClass(view === "new")} onClick={() => setView("new")}>New Checkup</button>}
               {ownerMode && <button className={navClass(view === "report")} disabled={!selectedAudit} onClick={() => setView("report")}>Sample Report</button>}
             </nav>
@@ -147,7 +147,7 @@ export default function Home() {
         {ownerMode && view === "new" && <NewAuditForm onSubmit={handleCreateAudit} />}
 
         {view === "report" && selectedAudit && (
-          <ReportView audit={selectedAudit} preparerName={sharedAudit?.preparerName ?? settings.preparerName} prospectMode={Boolean(sharedAudit)} />
+          <ReportView audit={selectedAudit} preparerName={sharedAudit?.preparerName ?? settings.preparerName} sharedMode={Boolean(sharedAudit)} />
         )}
       </div>
     </main>

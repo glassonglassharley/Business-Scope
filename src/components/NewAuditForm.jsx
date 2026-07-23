@@ -67,26 +67,26 @@ export function NewAuditForm({ onSubmit }) {
         return;
       }
 
-      const prospect = body.prospect;
+      const scan = body.scan;
       const websiteAuditResult = await scanWebsiteForPlace(body.place);
       setForm((current) => ({
         ...current,
-        businessName: prospect.businessName || current.businessName,
-        city: prospect.city || current.city,
-        industry: prospect.industry || current.industry,
-        websiteStatus: prospect.website.status,
-        hasSsl: prospect.website.hasSsl,
-        gbpClaimed: prospect.googleBusinessProfile.claimed,
-        gbpHours: prospect.googleBusinessProfile.hoursListed,
-        gbpPhotos: prospect.googleBusinessProfile.photosPresent,
-        gbpPrimaryCategory: prospect.googleBusinessProfile.primaryCategorySet,
-        hoursAccurate: prospect.accuracy.hoursAccurate,
-        phoneAccurate: prospect.accuracy.phoneAccurate,
-        addressAccurate: prospect.accuracy.addressAccurate,
-        servicesAccurate: prospect.accuracy.servicesAccurate,
-        averageRating: prospect.reviews.averageRating,
-        reviewCount: prospect.reviews.count,
-        clickToCall: prospect.contact.clickToCall,
+        businessName: scan.businessName || current.businessName,
+        city: scan.city || current.city,
+        industry: scan.industry || current.industry,
+        websiteStatus: scan.website.status,
+        hasSsl: scan.website.hasSsl,
+        gbpClaimed: scan.googleBusinessProfile.claimed,
+        gbpHours: scan.googleBusinessProfile.hoursListed,
+        gbpPhotos: scan.googleBusinessProfile.photosPresent,
+        gbpPrimaryCategory: scan.googleBusinessProfile.primaryCategorySet,
+        hoursAccurate: scan.accuracy.hoursAccurate,
+        phoneAccurate: scan.accuracy.phoneAccurate,
+        addressAccurate: scan.accuracy.addressAccurate,
+        servicesAccurate: scan.accuracy.servicesAccurate,
+        averageRating: scan.reviews.averageRating,
+        reviewCount: scan.reviews.count,
+        clickToCall: scan.contact.clickToCall,
         dataSource: "google_places",
         googlePlaces: body.place,
         placesScoreBreakdown: body.scoreBreakdown,

@@ -6,7 +6,7 @@ import { getScoringCategories } from "@/lib/scoringConfig";
 import { encodeAuditForUrl } from "@/lib/shareLinks";
 import { BRAND } from "@/lib/brand";
 
-export function ReportView({ audit, preparerName, prospectMode = false }) {
+export function ReportView({ audit, preparerName, sharedMode = false }) {
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
   const band = bandForScore(audit.score.total);
   const reportPreparer = preparerName || BRAND;
@@ -33,7 +33,7 @@ export function ReportView({ audit, preparerName, prospectMode = false }) {
   return (
     <article className="print-page mx-auto max-w-5xl overflow-hidden rounded-lg border border-line bg-surface shadow-soft">
       <div className="no-print grid gap-2 border-b border-line bg-paper px-4 py-4 sm:flex sm:justify-end sm:px-5">
-        {!prospectMode && <button className="secondary-button w-full py-2 sm:w-auto" onClick={copyLink}>{copyStatus}</button>}
+        {!sharedMode && <button className="secondary-button w-full py-2 sm:w-auto" onClick={copyLink}>{copyStatus}</button>}
         <button className="primary-button w-full py-2 sm:w-auto" onClick={() => window.print()}>Export PDF</button>
       </div>
 

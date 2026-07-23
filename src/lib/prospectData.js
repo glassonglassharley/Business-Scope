@@ -1,3 +1,5 @@
+import { fetchJson } from "./placesHttp.mjs";
+
 export function getProspectData(businessName, city, industry, manualInputs) {
   return ManualInputProvider.getProspectData(businessName, city, industry, manualInputs);
 }
@@ -155,6 +157,7 @@ async function fetchPlaceDetails({ apiKey, placeId }) {
     "opening_hours",
     "rating",
     "user_ratings_total",
+    "reviews",
     "types",
     "photos"
   ].join(","));
@@ -173,17 +176,6 @@ async function fetchPlaceDetails({ apiKey, placeId }) {
   }
 
   return { ok: true, place: body.data.result };
-}
-
-async function fetchJson(url) {
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.error_message || `Google Places HTTP ${response.status}` };
-    return { ok: true, data };
-  } catch (error) {
-    return { ok: false, error: error?.message || "Google Places request failed." };
-  }
 }
 
 function normalizeCandidate(candidate = {}) {
@@ -211,6 +203,15 @@ function normalizePlace(place = {}, fallback = {}) {
       : null,
     rating: typeof place.rating === "number" ? place.rating : null,
     reviewCount: typeof place.user_ratings_total === "number" ? place.user_ratings_total : null,
+    // Timestamps only (Google returns at most the 5 most recent reviews).
+    // Review text/authors are deliberately not kept.
+    reviewTimestamps: Array.isArray(place.reviews)
+      ? place.reviews
+          .map((review) => (typeof review.time === "number" ? new Date(review.time * 1000).toISOString() : null))
+          .filter(Boolean)
+          .sort()
+          .reverse()
+      : [],
     types: Array.isArray(place.types) ? place.types : [],
     photosCount: Array.isArray(place.photos) ? place.photos.length : null,
     claimedOrVerified: null

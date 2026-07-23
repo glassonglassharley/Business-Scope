@@ -58,7 +58,7 @@ const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     weight: BUSINESS_HEALTH_CATEGORY_WEIGHTS.dataAccuracy,
     subScores: [
       { key: "nap", label: "Name, address, phone", weight: 45, metricKeys: ["napConsistency"] },
-      { key: "hours", label: "Hours", weight: 35, metricKeys: ["hoursConsistency", "hoursCompleteness"] },
+      { key: "hours", label: "Hours", weight: 35, metricKeys: ["hoursConsistency", "hoursCoverage"] },
       { key: "directories", label: "Directory consistency", weight: 20, metricKeys: ["directoryConflicts"] }
     ],
     metrics: [
@@ -67,7 +67,7 @@ const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
         const base = boolScore(scan.dataAccuracy?.hoursConsistent, "Business hours match across Google, website, and listings.");
         return applyPenalty(base, scan.dataAccuracy?.hoursConsistent === false ? 12 : 0, "Inconsistent hours receive an extra penalty because they can directly waste customer trips.");
       }),
-      metric("hoursCompleteness", "Hours completeness", 15, "Easy", "15-30 minutes", (scan) => boolScore(scan.dataAccuracy?.hoursComplete, "Complete hours help customers know when they can call, visit, or order.")),
+      metric("hoursCoverage", "Hours coverage", 15, "Easy", "15-30 minutes", (scan) => boolScore(scan.dataAccuracy?.hoursComplete, "Complete hours help customers know when they can call, visit, or order.")),
       metric("directoryConflicts", "Directory conflict rate", 20, "Medium", "2-4 hours", (scan) => {
         const data = scan.dataAccuracy;
         if (data?.conflictingDirectoryCount === undefined || !data.totalDirectoryCount) return unknown("Directory conflict data was not provided.");
@@ -81,16 +81,16 @@ const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     label: "Discovery Strength",
     weight: BUSINESS_HEALTH_CATEGORY_WEIGHTS.discoveryStrength,
     subScores: [
-      { key: "gbp", label: "Google profile", weight: 55, metricKeys: ["gbpCompleteness", "gbpOwnership"] },
+      { key: "gbp", label: "Google profile", weight: 55, metricKeys: ["gbpStrength", "gbpOwnership"] },
       { key: "localPack", label: "Local pack visibility", weight: 25, metricKeys: ["localRank"] },
       { key: "directoryPresence", label: "Directory presence", weight: 20, metricKeys: ["directoryPresence"] }
     ],
     metrics: [
-      metric("gbpCompleteness", "Google Business Profile completeness", 35, "Easy", "1-2 hours", (scan) => {
+      metric("gbpStrength", "Google Business Profile strength", 35, "Easy", "1-2 hours", (scan) => {
         const data = scan.discoveryStrength;
-        if (data?.googleBusinessProfileCompleteness === undefined) return unknown("Google profile completeness was not provided.");
+        if (data?.googleBusinessProfileCompleteness === undefined) return unknown("Google profile strength data was not provided.");
         const bonus = data.googleBusinessProfileVerified ? 5 : 0;
-        return explained(clampScore(data.googleBusinessProfileCompleteness + bonus), `Google profile completeness is ${data.googleBusinessProfileCompleteness}/100${bonus ? ", with a verification bonus." : "."}`);
+        return explained(clampScore(data.googleBusinessProfileCompleteness + bonus), `Google profile strength is ${data.googleBusinessProfileCompleteness}/100${bonus ? ", with a verification bonus." : "."}`);
       }),
       metric("gbpOwnership", "Claimed and verified Google listing", 20, "Easy", "30-60 minutes", (scan) => {
         const data = scan.discoveryStrength;
@@ -596,8 +596,8 @@ function momentumFromVelocity(velocity: number, scanCount: number): MomentumDire
 
 function suggestedFixFor(category: BusinessHealthCategoryKey, metricKey: string): string {
   const fixes: Partial<Record<BusinessHealthCategoryKey, Record<string, string>>> = {
-    dataAccuracy: { napConsistency: "Correct the business name, phone, and address everywhere customers see them.", hoursConsistency: "Make Google, website, and directory hours match exactly, including holiday hours.", hoursCompleteness: "Add complete business hours anywhere customers may check before visiting or calling.", directoryConflicts: "Clean up conflicting directory listings, starting with the highest-traffic sources." },
-    discoveryStrength: { gbpCompleteness: "Fill missing Google Business Profile fields and add the strongest available categories/services.", gbpOwnership: "Claim and verify the Google listing so the business controls its public storefront.", localRank: "Improve local Maps relevance with category, service, review, and proximity signals.", directoryPresence: "Add or repair listings on the directories customers and search engines trust." },
+    dataAccuracy: { napConsistency: "Correct the business name, phone, and address everywhere customers see them.", hoursConsistency: "Make Google, website, and directory hours match exactly, including holiday hours.", hoursCoverage: "Add complete business hours anywhere customers may check before visiting or calling.", directoryConflicts: "Clean up conflicting directory listings, starting with the highest-traffic sources." },
+    discoveryStrength: { gbpStrength: "Fill missing Google Business Profile fields and add the strongest available categories/services.", gbpOwnership: "Claim and verify the Google listing so the business controls its public storefront.", localRank: "Improve local Maps relevance with category, service, review, and proximity signals.", directoryPresence: "Add or repair listings on the directories customers and search engines trust." },
     onlinePresence: { websiteAvailability: "Make sure the website is live, reachable, and points to the correct business.", mobileOptimization: "Fix mobile layout, tap targets, and above-the-fold contact paths.", speed: "Compress heavy assets and remove slow-loading scripts from key pages.", schema: "Add local business schema so search engines can understand the business details.", conversionPath: "Add a clear call, booking, order, or quote path on the main pages." },
     contentFreshness: { photos: "Add recent real photos that show the location, work, team, products, or menu items.", posts: "Publish a current update so customers can tell the business is active.", questions: "Answer visible customer questions in plain language.", reviewFreshness: "Ask recent happy customers for reviews to refresh trust signals.", reviewVelocity: "Create a simple review request rhythm after successful customer interactions." },
     customerSignals: { reviewCount: "Ask more recent customers for reviews until the business clears the trust threshold.", rating: "Respond to negative patterns and fix the service issues hurting the visible rating.", responseRate: "Reply to more reviews, especially recent and negative ones.", responseSpeed: "Shorten review and lead response time with templates or notifications." },
