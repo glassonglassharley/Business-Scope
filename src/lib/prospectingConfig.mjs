@@ -192,6 +192,49 @@ export const discoveryConfig = {
   ]
 };
 
+// Category catalog for multi-category sweeps. Each entry maps a human label to
+// a Google query: `type` uses the legacy Nearby Search type filter (tighter,
+// cheaper signal); `keyword` is a free-text search for categories Google has no
+// type for. `fit` rates suitability for the offer (a local business that needs
+// web presence and can pay a few hundred a month); `default` marks whether the
+// standard sweep includes it. Edit freely.
+export const categoryCatalog = [
+  // --- Home services: strongest fit. Local, need web presence, pay for leads.
+  { slug: "plumber", label: "Plumbing", type: "plumber", fit: "strong", default: true },
+  { slug: "hvac", label: "HVAC", keyword: "hvac", fit: "strong", default: true },
+  { slug: "roofing", label: "Roofing", type: "roofing_contractor", fit: "strong", default: true },
+  { slug: "electrical", label: "Electrical", type: "electrician", fit: "strong", default: true },
+  { slug: "landscaping", label: "Landscaping", keyword: "landscaping", fit: "strong", default: true },
+  { slug: "painting", label: "Painting", type: "painter", fit: "strong", default: true },
+  { slug: "general-contractor", label: "General contracting", type: "general_contractor", fit: "strong", default: true, note: "Broad; overlaps roofing/painting/etc. heavily." },
+  { slug: "locksmith", label: "Locksmith", type: "locksmith", fit: "mixed", default: true, note: "Category is polluted by national lead-gen/scam listings; expect noise." },
+  { slug: "pest-control", label: "Pest control", keyword: "pest control", fit: "strong", default: true },
+  { slug: "moving", label: "Moving", type: "moving_company", fit: "mixed", default: true, note: "Brokers and national franchises common; chain pre-filter helps." },
+  { slug: "garage-doors", label: "Garage doors", keyword: "garage door repair", fit: "strong", default: true },
+  { slug: "pool-service", label: "Pool service", keyword: "pool service", fit: "strong", default: true },
+
+  // --- Auto: good fit except dealerships (excluded — franchised, corporate web).
+  { slug: "auto-repair", label: "Auto repair", type: "car_repair", fit: "strong", default: true },
+  { slug: "auto-body", label: "Auto body", keyword: "auto body shop", fit: "strong", default: true },
+  { slug: "auto-detailing", label: "Auto detailing", keyword: "auto detailing", fit: "strong", default: true },
+  { slug: "tires", label: "Tire shops", keyword: "tire shop", fit: "mixed", default: true, note: "Chains (Discount Tire, Big O) common; pre-filter handles them." },
+
+  // --- Health & personal: strong payers; expect higher already-has-site rates.
+  { slug: "dental", label: "Dental", type: "dentist", fit: "strong", default: true, note: "Good payers, but many already have strong sites -> higher strong_presence DQ." },
+  { slug: "chiropractic", label: "Chiropractic", keyword: "chiropractor", fit: "strong", default: true },
+  { slug: "med-spa", label: "Med spa", keyword: "med spa", fit: "strong", default: true },
+  { slug: "salon", label: "Hair salon", type: "beauty_salon", fit: "strong", default: true },
+  { slug: "barber", label: "Barber", keyword: "barber shop", fit: "mixed", default: true, note: "Very small operators; some below the pay-a-few-hundred line." },
+  { slug: "gym", label: "Gym", type: "gym", fit: "mixed", default: true, note: "Franchise-heavy (Planet Fitness, Anytime); independents are the target." },
+  { slug: "veterinary", label: "Veterinary", type: "veterinary_care", fit: "mixed", default: true, note: "Corporate consolidation rising; independents still good." },
+
+  // --- Professional: good payers, but weaker fit for THIS offer.
+  { slug: "law", label: "Law firms", type: "lawyer", fit: "mixed", default: true, note: "Often already have sites; strong payers when they don't." },
+  { slug: "accounting", label: "Accounting", type: "accounting", fit: "mixed", default: true },
+  { slug: "insurance", label: "Insurance agents", type: "insurance_agency", fit: "weak", default: false, note: "Heavily franchised (State Farm/Allstate); corporate provides the web presence." },
+  { slug: "real-estate", label: "Real estate", type: "real_estate_agency", fit: "weak", default: false, note: "Agents rely on brokerage sites + Zillow; unlikely to buy a site cleanup." }
+];
+
 export function estimateCostUsd(requestCounts, rates = discoveryConfig.costEstimatesUsdPer1000) {
   let total = 0;
   for (const [endpoint, count] of Object.entries(requestCounts || {})) {
