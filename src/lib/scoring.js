@@ -37,12 +37,30 @@ const CONTENT_FRESHNESS_BASE_WEIGHT = 9;
 // Phase 1: raise as more presence sources come online.
 const ONLINE_PRESENCE_BASE_WEIGHT = 8;
 
+/**
+ * A website that is absent, or listed but does not load, is a MEASURED
+ * failure — the worst observable result — not an unmeasurable signal.
+ * Website-dependent metrics therefore score 0 and stay in the weighted
+ * average. Only genuinely unobservable signals (owner review responses,
+ * claimed status, unbuilt scanners) stay null and are renormalized away.
+ *
+ * @param {object|null} audit websiteAudit from WebsiteProvider
+ * @returns {boolean} true when there is nothing live for customers to land on
+ */
+function isSiteDead(audit) {
+  if (!audit) return false;
+  // A scanner outage is a real unknown; it must not masquerade as a failure.
+  if (audit.status === "scan_unavailable") return false;
+  if (audit.websiteUrl === null) return true;
+  return audit.reachable?.value === false;
+}
+
 const PLACES_CATEGORY_CONFIG = [
   { key: "dataAccuracy", label: "Data Accuracy & Consistency", baseWeight: 25, scanner: (prospect) => scorePlacesDataAccuracy(prospect?.googlePlaces || null) },
   { key: "discoveryStrength", label: "Discovery / Google Profile Strength", baseWeight: 20, scanner: (prospect) => scorePlacesDiscovery(prospect?.googlePlaces || null) },
   // Extension point: flip each scanner from null to a real function when that data source is implemented.
-  { key: "onlinePresence", label: "Online Presence", baseWeight: ONLINE_PRESENCE_BASE_WEIGHT, scanner: (prospect) => scoreOnlinePresence(prospect?.websiteAudit?.onlinePresence || null) },
-  { key: "contentFreshness", label: "Content Freshness", baseWeight: CONTENT_FRESHNESS_BASE_WEIGHT, scanner: (prospect) => scoreContentFreshness(prospect?.websiteAudit?.contentFreshness || null, prospect?.googlePlaces || null) },
+  { key: "onlinePresence", label: "Online Presence", baseWeight: ONLINE_PRESENCE_BASE_WEIGHT, scanner: (prospect) => scoreOnlinePresence(prospect?.websiteAudit?.onlinePresence || null, isSiteDead(prospect?.websiteAudit)) },
+  { key: "contentFreshness", label: "Content Freshness", baseWeight: CONTENT_FRESHNESS_BASE_WEIGHT, scanner: (prospect) => scoreContentFreshness(prospect?.websiteAudit?.contentFreshness || null, prospect?.googlePlaces || null, isSiteDead(prospect?.websiteAudit)) },
   { key: "customerSignals", label: "Customer Signals", baseWeight: 10, scanner: (prospect) => scorePlacesCustomerSignals(prospect?.googlePlaces || null) },
   { key: "aiVisibility", label: "AI Visibility", baseWeight: 10, scanner: null },
   { key: "technicalHealth", label: "Technical Health", baseWeight: TECHNICAL_HEALTH_BASE_WEIGHT, scanner: (prospect) => scoreWebsiteTechnicalHealth(prospect?.websiteAudit || null) }
@@ -121,20 +139,26 @@ function scorePlacesDiscovery(place) {
   return { score: averageMetricScore(metrics), metrics };
 }
 
-function scoreOnlinePresence(onlinePresence) {
+function scoreOnlinePresence(onlinePresence, siteDead = false) {
   if (!onlinePresence) return { score: null, metrics: [] };
   const sources = onlinePresence.sources || {};
   const websiteNap = sources.websiteNap || {};
   const yelp = sources.yelp || {};
   const metrics = [
-    nullableBooleanMetric("websitePhone", "Website phone appears consistent", websiteNap.phoneMatches ?? null, {
+    // With no working website there is nowhere for these details to appear:
+    // a measured absence, scored 0 rather than excluded.
+    nullableBooleanMetric("websitePhone", "Website phone appears consistent", siteDead ? false : websiteNap.phoneMatches ?? null, {
       good: "The phone number customers see on Google also appears on the website.",
-      low: "The website phone number conflicts with Google.",
+      low: siteDead
+        ? "There is no working website, so the phone number on Google is not backed up anywhere customers can check."
+        : "The website phone number conflicts with Google.",
       unavailable: websiteNap.reason || "Could not confirm the Google phone number on the homepage; this stays neutral."
     }),
-    nullableBooleanMetric("websiteAddress", "Website address appears consistent", websiteNap.addressMatches ?? null, {
+    nullableBooleanMetric("websiteAddress", "Website address appears consistent", siteDead ? false : websiteNap.addressMatches ?? null, {
       good: "The address or service-area details from Google also appear on the website.",
-      low: "The website address conflicts with Google.",
+      low: siteDead
+        ? "There is no working website, so the address or service area on Google is not backed up anywhere customers can check."
+        : "The website address conflicts with Google.",
       unavailable: websiteNap.reason || "Could not confirm the Google address on the homepage; this stays neutral."
     }),
     nullableBooleanMetric("yelpPresence", "Yelp listing found", yelp.found === true ? true : null, {
@@ -170,21 +194,27 @@ function scoreOnlinePresence(onlinePresence) {
 
   return { score: averageMetricScore(metrics), metrics };
 }
-function scoreContentFreshness(freshness, place) {
+function scoreContentFreshness(freshness, place, siteDead = false) {
   if (!freshness && !place) return { score: null, metrics: [] };
   const signals = freshness?.signals || {};
   const hoursSignal = signals.hoursSpecificity || scoreHoursSpecificityForPlace(place?.openingHours);
   const metrics = [
-    numberMetric("copyrightYear", "Copyright year", signals.copyright?.year ?? null, scoreCopyrightAge(signals.copyright), {
+    // No working website means no page to look maintained: measured 0, not
+    // excluded. A live site simply lacking these markers stays neutral.
+    numberMetric("copyrightYear", "Copyright year", signals.copyright?.year ?? null, siteDead ? 0 : scoreCopyrightAge(signals.copyright), {
       good: "The homepage copyright year looks current.",
       mid: "The homepage copyright year is a little dated, but not a major concern by itself.",
-      low: "The homepage copyright year looks stale, which can make the site feel neglected.",
+      low: siteDead
+        ? "There is no working website to show customers the business is still active."
+        : "The homepage copyright year looks stale, which can make the site feel neglected.",
       unavailable: signals.copyright?.reason || "No copyright year was found; this is neutral because many current sites do not show one."
     }),
-    numberMetric("pageDate", "Updated date signal", signals.pageDate?.year ?? null, scoreDateAge(signals.pageDate), {
+    numberMetric("pageDate", "Updated date signal", signals.pageDate?.year ?? null, siteDead ? 0 : scoreDateAge(signals.pageDate), {
       good: "The homepage includes a recent updated or published date signal.",
       mid: "The homepage date signal is present but not very recent.",
-      low: "The homepage date signal looks old enough to make the site feel stale.",
+      low: siteDead
+        ? "There is no working website carrying any sign of recent updates."
+        : "The homepage date signal looks old enough to make the site feel stale.",
       unavailable: signals.pageDate?.reason || "No clear page update date was found; this stays neutral."
     }),
     numberMetric("photoVolume", "Google photo volume", signals.googlePhotos?.count ?? place?.photosCount ?? null, scorePhotoVolume(signals.googlePhotos?.count ?? place?.photosCount), {
@@ -234,10 +264,29 @@ function scoreWebsiteTechnicalHealth(audit) {
       metrics: [{ id: "scan-unavailable", label: "Website scan", value: null, score: null, note: audit.reason || "This check could not run this time." }]
     };
   }
-  const noWebsite = audit.websiteUrl === null;
-  const metrics = noWebsite
-    ? [booleanMetric("website", "Website found", false, { good: "Google returned a website URL for this business.", low: "Google Places did not return a website URL. No website is a measured customer-facing gap." })]
-    : [
+  // Absent or non-loading website: the whole category is a measured 0. Every
+  // check below describes something on a page customers can reach, and there
+  // is no such page — scoring these as "unavailable" would renormalize the
+  // failure away and inflate the overall score.
+  if (isSiteDead(audit)) {
+    return audit.websiteUrl === null
+      ? {
+          score: 0,
+          metrics: [booleanMetric("website", "Website found", false, {
+            good: "Google returned a website URL for this business.",
+            low: "Google does not list a website for this business, so customers who want to check details before calling have nowhere to go."
+          })]
+        }
+      : {
+          score: 0,
+          metrics: [booleanMetric("reachable", "Website loads for customers", false, {
+            good: "The website loaded for this scan.",
+            low: audit.reachable?.reason || "The website listed on Google did not load, so customers who click through hit a dead end."
+          })]
+        };
+  }
+
+  const metrics = [
         nullableBooleanMetric("reachable", "Website reachable", audit.reachable?.value ?? null, { good: "The website loaded for this scan.", low: audit.reachable?.reason || "The website did not load reliably for this scan.", unavailable: audit.reachable?.reason || "Whether the website loads could not be measured from this scan." }),
         nullableBooleanMetric("https", "Served over HTTPS", audit.https?.servedOverHttps ?? null, { good: "Customers land on a secure HTTPS version of the site.", low: "The site is not served over HTTPS, so customers may see a not-secure warning.", unavailable: "HTTPS status was not available from this scan." }),
         nullableBooleanMetric("certificate", "Valid HTTPS response", audit.https?.validCertificate ?? null, { good: "The HTTPS certificate responded cleanly for this scan.", low: "The HTTPS certificate did not validate cleanly, which can trigger browser trust warnings.", unavailable: "Certificate status was not available from this scan." }),
@@ -251,7 +300,7 @@ function scoreWebsiteTechnicalHealth(audit) {
         nullableBooleanMetric("mobile", "Mobile usability signal", audit.performance?.mobileFriendly ?? null, { good: "The available performance data suggests the page is usable on mobile.", low: "The available performance data suggests mobile visitors may have trouble using the page.", unavailable: performanceNote(audit.performance?.reason) }),
         nullableBooleanMetric("phoneMatch", "Website phone matches Google", audit.nap?.phoneMatches ?? null, { good: "The Google phone number appears on the website.", low: audit.nap?.reason || "The website phone number conflicts with Google.", unavailable: audit.nap?.reason || "Could not confirm the Google phone number on the homepage." }),
         nullableBooleanMetric("addressMatch", "Website address matches Google", audit.nap?.addressMatches ?? null, { good: "The Google address appears on the website.", low: audit.nap?.reason || "The website address conflicts with Google.", unavailable: audit.nap?.reason || "Could not confirm the Google address on the homepage." })
-      ];
+  ];
 
   return { score: averageMetricScore(metrics), metrics };
 }

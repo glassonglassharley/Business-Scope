@@ -16,7 +16,7 @@ import { getDb } from "./db.mjs";
 import { planTiles } from "./discoveryGrid.mjs";
 import { fetchContactDetails, geocodeZip, nearbySearchPage } from "./placesDiscovery.mjs";
 import { sleep } from "./placesHttp.mjs";
-import { discoveryConfig, estimateCostUsd } from "./prospectingConfig.mjs";
+import { discoveryConfig, estimateCostUsd, prospectScoringConfig } from "./prospectingConfig.mjs";
 
 class RunAborted extends Error {
   constructor(reason) {
@@ -82,7 +82,8 @@ export async function runDiscovery({ campaignName, resumeRunId, maxRequests }) {
   };
 
   // nameCounts feeds stats.topNames so recurring chains can be hand-added to
-  // the config list. Tracked across everything this run saw, dupes included.
+  // the config list. Counted per unique place_id (see below), so a count > 1
+  // means separate businesses share a name.
   const nameCounts = new Map();
   const seenThisRun = new Set();
 
@@ -99,12 +100,15 @@ export async function runDiscovery({ campaignName, resumeRunId, maxRequests }) {
       const freshResults = [];
       for (const result of tileResults) {
         if (!result.placeId) continue;
-        countName(nameCounts, result.name);
         if (seenThisRun.has(result.placeId)) {
           state.stats.duplicatesInRun += 1;
           continue;
         }
         seenThisRun.add(result.placeId);
+        // Counted after dedup so a repeat name means distinct businesses
+        // sharing it (a real chain signal), not one business seen from
+        // several overlapping tiles.
+        countName(nameCounts, result.name);
         freshResults.push(result);
       }
 
@@ -280,7 +284,7 @@ async function applyPrefilter(db, campaignId, state) {
  */
 async function collectContacts(db, state, apiKey, campaignId) {
   const unchecked = await db.query(
-    `select p.id as pipeline_id, b.place_id
+    `select p.id as pipeline_id, b.place_id, b.rating, b.review_count
      from pipeline p join businesses b on b.id = p.business_id
      where p.campaign_id = $1 and p.status = 'new'
        and b.phone is null and b.website_url is null
@@ -310,13 +314,19 @@ async function collectContacts(db, state, apiKey, campaignId) {
     }
     if (!details.phone && !details.website) {
       // Confirmed absent by an actual Details call — only now is it a
-      // disqualifier rather than unknown.
+      // disqualifier rather than unknown. Businesses whose viability signals
+      // say they are clearly alive and earning get 'needs_lookup' instead, so
+      // a human can find a channel rather than losing them silently.
+      const { minReviewCount, minRating } = prospectScoringConfig.needsLookup;
+      const worthFinding = (row.review_count || 0) >= minReviewCount && Number(row.rating || 0) >= minRating;
+      const status = worthFinding ? "needs_lookup" : "disqualified";
       await db.query(
-        "update pipeline set status = 'disqualified', notes = 'no_contact_method', updated_at = now() where id = $1",
-        [row.pipeline_id]
+        "update pipeline set status = $2, notes = 'no_contact_method', updated_at = now() where id = $1",
+        [row.pipeline_id, status]
       );
       state.stats.prefiltered = state.stats.prefiltered || {};
-      state.stats.prefiltered.no_contact_method = (state.stats.prefiltered.no_contact_method || 0) + 1;
+      const key = worthFinding ? "needs_lookup" : "no_contact_method";
+      state.stats.prefiltered[key] = (state.stats.prefiltered[key] || 0) + 1;
     }
     await persistRun(db, state);
   }

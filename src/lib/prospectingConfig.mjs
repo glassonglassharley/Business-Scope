@@ -34,6 +34,11 @@ export const prospectScoringConfig = {
   momentum: {
     // reviewVelocity is the heaviest signal by design.
     weights: { reviewVelocity: 0.5, ownerResponds: 0.2, socialWhileSiteWeak: 0.3 },
+
+    // Two snapshots taken close together say nothing about velocity: a
+    // same-day re-scan would show "0 new reviews" and look like dead momentum.
+    // Below this gap, fall back to latest-review recency instead.
+    minVelocityDays: 7,
     // Reviews gained per 30 days (from consecutive scan snapshots).
     velocityBands: [
       { min: 8, score: 100 },
@@ -70,7 +75,26 @@ export const prospectScoringConfig = {
 
   disqualifiers: {
     // presence_score at/above this = site already strong; they won't buy.
-    strongPresenceScore: 80
+    //
+    // Calibrated 2026-07-23 against 17 scanned San Diego plumbers:
+    //   44, 56, 59 | 75 | 85, 89, 89 | 90 90 91 92 92 93 93 96 99 100
+    // The scores cluster hard from 90 up (10 of 17). Below 90 there is always
+    // a concrete defect to open a conversation with — a failing HTTPS
+    // redirect, no meta description, poor mobile performance. At 90+ the
+    // remaining differences are cosmetic (favicon, single H1) and there is no
+    // credible "your site is costing you customers" pitch.
+    // Re-check this number whenever the scanner set changes: it is a property
+    // of what the engine currently measures, not a universal constant.
+    strongPresenceScore: 90
+  },
+
+  // A business with no automatically discoverable contact channel is normally
+  // disqualified. When these viability signals are met it is instead flagged
+  // 'needs_lookup': clearly a real, earning business that is simply hard to
+  // reach automatically, and worth a manual search rather than a silent drop.
+  needsLookup: {
+    minReviewCount: 15,
+    minRating: 4.0
   }
 };
 

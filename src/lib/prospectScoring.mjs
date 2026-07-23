@@ -112,14 +112,17 @@ function scoreViability(business, config) {
 }
 
 function scoreMomentum(input, config, now) {
-  const { weights, velocityBands, reviewRecencyBands, socialScores } = config.momentum;
+  const { weights, velocityBands, reviewRecencyBands, socialScores, minVelocityDays } = config.momentum;
   const { latestScan, previousScan, channels, business } = input;
 
   // Review velocity from consecutive snapshots; recency of latest review as
-  // the first-scan fallback.
+  // the fallback on a first scan, or when two snapshots are too close together
+  // for a delta to mean anything.
   let reviewVelocity = null;
-  if (typeof latestScan?.reviewCount === "number" && typeof previousScan?.reviewCount === "number") {
-    const days = Math.max(1, daysBetween(previousScan.scannedAt, latestScan.scannedAt));
+  const snapshotGapDays = previousScan ? daysBetween(previousScan.scannedAt, latestScan.scannedAt) : 0;
+  const gapIsMeaningful = snapshotGapDays >= (minVelocityDays ?? 7);
+  if (typeof latestScan?.reviewCount === "number" && typeof previousScan?.reviewCount === "number" && gapIsMeaningful) {
+    const days = Math.max(1, snapshotGapDays);
     const perMonth = ((latestScan.reviewCount - previousScan.reviewCount) / days) * 30;
     reviewVelocity = {
       score: velocityBands.find((band) => perMonth >= band.min)?.score ?? velocityBands.at(-1).score,

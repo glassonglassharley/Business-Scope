@@ -28,9 +28,10 @@ const command = positionals[0];
 try {
   if (command === "recompute") await recompute();
   else if (command === "rank") await rank();
+  else if (command === "needs-lookup") await needsLookup();
   else if (command === "demo") demo();
   else {
-    console.error("Usage: score.mjs <recompute|rank|demo> [--campaign <name>] [--limit N]");
+    console.error("Usage: score.mjs <recompute|rank|needs-lookup|demo> [--campaign <name>] [--limit N]");
     process.exit(1);
   }
 } catch (error) {
@@ -57,6 +58,21 @@ async function recompute() {
   try {
     // prospect_scores is derived-only: wipe and rebuild is lossless.
     await db.query("delete from prospect_scores where campaign_id = $1", [campaignId]);
+
+    // Reclassify unreachable-but-viable businesses that discovery filed as
+    // 'disqualified' before the needs_lookup rule existed. Only touches rows
+    // discovery itself set (status 'disqualified' + notes 'no_contact_method'),
+    // never a human-set outreach status.
+    const reclassified = await db.query(
+      `update pipeline p set status = 'needs_lookup', updated_at = now()
+       from businesses b
+       where b.id = p.business_id and p.campaign_id = $1
+         and p.status = 'disqualified' and p.notes = 'no_contact_method'
+         and coalesce(b.review_count, 0) >= $2 and coalesce(b.rating, 0) >= $3
+       returning p.id`,
+      [campaignId, prospectScoringConfig.needsLookup.minReviewCount, prospectScoringConfig.needsLookup.minRating]
+    );
+    stats.reclassified_needs_lookup = reclassified.rowCount;
 
     const targets = await db.query(
       `select b.id as business_id, b.place_id, b.name, b.business_status, b.rating, b.review_count,
@@ -107,7 +123,7 @@ async function recompute() {
           status: row.status,
           lastActivityAt: row.last_activity_at
         })),
-        contactsConfirmedAbsent: target.pipeline_status === "disqualified" && target.pipeline_notes === "no_contact_method",
+        contactsConfirmedAbsent: ["disqualified", "needs_lookup"].includes(target.pipeline_status) && target.pipeline_notes === "no_contact_method",
         isChain: target.pipeline_notes === "chain_or_franchise" || isConfiguredChain(target.name)
       });
 
@@ -172,6 +188,40 @@ async function rank() {
     console.log(
       `${String(index + 1).padStart(3)}. ${fmt(row.prospect_score, 5)} ${fmt(row.weakness, 5)} ${fmt(row.viability, 5)} ${fmt(row.momentum, 5)} ${fmt(row.reachability_factor, 5)} ${fmt(row.completeness, 5)}  ${row.name}${row.city ? ` (${row.city})` : ""} ${row.phone || row.website_url || ""}`
     );
+  }
+  process.exit(0);
+}
+
+/** Businesses worth contacting that no automated channel could reach. */
+async function needsLookup() {
+  if (!values.campaign) throw new Error("--campaign is required.");
+  const { getDb } = await import("../src/lib/db.mjs");
+  const db = getDb();
+
+  const result = await db.query(
+    `select b.name, b.city, b.address, b.rating, b.review_count, s.presence_score
+     from pipeline p
+     join businesses b on b.id = p.business_id
+     left join lateral (
+       select presence_score from scans s2 where s2.place_id = b.place_id
+       order by s2.scanned_at desc limit 1
+     ) s on true
+     where p.campaign_id = (select id from campaigns where name = $1)
+       and p.status = 'needs_lookup'
+     order by b.review_count desc nulls last`,
+    [values.campaign]
+  );
+
+  if (!result.rows.length) {
+    console.log("No businesses flagged for manual lookup.");
+    process.exit(0);
+  }
+  console.log(`Worth finding by hand — campaign "${values.campaign}" (${result.rows.length})\n`);
+  console.log("Alive and earning, but no phone, website, or form was discoverable automatically.\n");
+  console.log("  revs rating  pres  business");
+  for (const row of result.rows) {
+    console.log(`  ${fmt(row.review_count, 4)} ${fmt(row.rating, 5)} ${fmt(row.presence_score, 5)}  ${row.name}${row.city ? ` (${row.city})` : ""}`);
+    if (row.address) console.log(`                      ${row.address}`);
   }
   process.exit(0);
 }

@@ -147,8 +147,11 @@ create table pipeline (
   id                uuid primary key default gen_random_uuid(),
   business_id       uuid not null references businesses(id) on delete cascade,
   campaign_id       uuid not null references campaigns(id) on delete cascade,
+  -- 'needs_lookup': no contact channel found automatically, but the viability
+  -- signals say it is worth finding one by hand. Distinct from 'disqualified'
+  -- so these surface in their own list instead of being silently dropped.
   status            text not null default 'new'
-                    check (status in ('new', 'queued', 'contacted', 'replied', 'meeting', 'won', 'lost', 'disqualified')),
+                    check (status in ('new', 'queued', 'needs_lookup', 'contacted', 'replied', 'meeting', 'won', 'lost', 'disqualified')),
   notes             text,
   last_contacted_at timestamptz,
   next_follow_up_at timestamptz,
