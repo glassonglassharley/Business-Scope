@@ -8,3 +8,6 @@ dev-server.log
 .env*.local
 .vercel/
 .DS_Store
+
+# Generated prospect call sheets — private layer, never commit
+outputs/
