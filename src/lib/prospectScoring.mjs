@@ -235,6 +235,13 @@ function collectDisqualifiers(input, reachability, config, weakness) {
   if (input.business.businessStatus === "CLOSED_PERMANENTLY") reasons.push("permanently_closed");
   if (input.isChain) reasons.push("chain_or_franchise");
 
+  // Off-category / non-established: no review evidence. See minReviewCount in
+  // config for why review count (not the Google type) is the reliable signal.
+  const reviewCount = input.business.reviewCount;
+  if (typeof reviewCount !== "number" || reviewCount < config.disqualifiers.minReviewCount) {
+    reasons.push("off_category");
+  }
+
   // Too little wrong to pitch. Only applied when weakness was actually
   // measured — an unscanned business is unknown, not strong.
   if (typeof weakness.score === "number" && weakness.score < config.disqualifiers.weaknessFloor) {

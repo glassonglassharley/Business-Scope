@@ -124,7 +124,21 @@ export const prospectScoringConfig = {
     // Only meaningful since weakness moved to the private category weighting
     // (v2) — under v1 weakness barely varied, so a floor would have been
     // arbitrary. Observed v2 range across 79 businesses: 8 to 89.
-    weaknessFloor: 12
+    weaknessFloor: 12,
+
+    // Relevance gate. Google's Nearby Search returns off-category junk that
+    // carries the SAME primary type as real businesses (a fake lead-gen
+    // listing stuffs `roofing_contractor` into its GBP just like a real
+    // roofer), so a types check cannot separate them. The reliable signature
+    // is review evidence: the junk has zero reviews, which also inflates
+    // viability (with no review count or rating, "open" becomes the only
+    // measured viability signal and pins it at 100). A business with no
+    // reviews is neither demonstrably earning nor a real prospect. Below this
+    // count it is disqualified as `off_category` at the discovery pre-filter
+    // — before any Details call or deep scan — and again at scoring so
+    // recompute stays consistent. Raise it to enforce a stronger
+    // "established business" bar; at 1 it cuts only zero-review listings.
+    minReviewCount: 1
   },
 
   // A business with no automatically discoverable contact channel is normally

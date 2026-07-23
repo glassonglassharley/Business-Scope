@@ -241,7 +241,7 @@ async function absorbResults(db, state, campaignId, freshResults) {
 /** Marks obvious non-candidates from stage-1 data only. Never scores. */
 async function applyPrefilter(db, campaignId, state) {
   const rows = await db.query(
-    `select p.id as pipeline_id, b.name, b.business_status
+    `select p.id as pipeline_id, b.name, b.business_status, b.review_count
      from pipeline p join businesses b on b.id = p.business_id
      where p.campaign_id = $1 and p.status = 'new'`,
     [campaignId]
@@ -254,11 +254,16 @@ async function applyPrefilter(db, campaignId, state) {
   );
   const countByName = new Map(frequency.rows.map((row) => [row.lname, row.n]));
 
-  const prefiltered = { permanently_closed: 0, chain_or_franchise: 0 };
+  const minReviews = prospectScoringConfig.disqualifiers.minReviewCount;
+  const prefiltered = { permanently_closed: 0, chain_or_franchise: 0, off_category: 0 };
   for (const row of rows.rows) {
     let reason = null;
     if (row.business_status === "CLOSED_PERMANENTLY") {
       reason = "permanently_closed";
+    } else if ((row.review_count || 0) < minReviews) {
+      // No review evidence: off-category junk or unestablished. Dropped here,
+      // before any contacts Details call — saves the spend on non-prospects.
+      reason = "off_category";
     } else {
       const normalized = normalizeName(row.name);
       const isListedChain = discoveryConfig.chainNames.some((chain) => normalized.includes(chain));
