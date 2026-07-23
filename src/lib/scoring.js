@@ -1,5 +1,7 @@
-import { ratingNeedsAttention, scoreReviewRating } from "@/lib/ratingScore";
-import { getScoringCategories } from "@/lib/scoringConfig";
+// Relative imports (not @/ alias) so this engine is importable from Node
+// scripts as well as Next.js — the private layer reuses it for deep scans.
+import { ratingNeedsAttention, scoreReviewRating } from "./ratingScore.js";
+import { getScoringCategories } from "./scoringConfig.js";
 
 export function calculateScore(prospect) {
   const categoriesConfig = getScoringCategories(prospect);

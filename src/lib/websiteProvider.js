@@ -1,7 +1,9 @@
 import { lookup } from "node:dns/promises";
 import net from "node:net";
-import { ContentFreshnessProvider } from "@/lib/contentFreshnessProvider";
-import { OnlinePresenceProvider } from "@/lib/onlinePresenceProvider";
+// Relative imports (not @/ alias) so this provider is importable from Node
+// scripts as well as Next.js — the private layer reuses it for deep scans.
+import { ContentFreshnessProvider } from "./contentFreshnessProvider.js";
+import { OnlinePresenceProvider } from "./onlinePresenceProvider.js";
 
 const REQUEST_TIMEOUT_MS = 5500;
 const PSI_TIMEOUT_MS = 7000;
@@ -61,12 +63,59 @@ export const WebsiteProvider = {
         contentFreshness,
         onlinePresence,
         performance: psi,
-        nap
+        nap,
+        contactPaths: extractContactPaths(html, parsed.url)
       },
       error: null
     };
   }
 };
+
+/**
+ * Contact paths visible on the already-fetched homepage HTML: public emails,
+ * social profile links, and whether a contact form/page exists. Derived from
+ * the business's own public homepage — no extra fetches.
+ */
+function extractContactPaths(html, url) {
+  if (!html) {
+    return { emails: [], socialLinks: [], hasContactForm: null, reason: "Homepage HTML was unavailable for contact-path detection." };
+  }
+
+  const emails = [...new Set(
+    [...html.matchAll(/href=["']mailto:([^"'?]+)/gi)].map((match) => match[1].trim().toLowerCase())
+      .concat((html.replace(/<script[\s\S]*?<\/script>/gi, " ").match(/\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/gi) || []).map((email) => email.toLowerCase()))
+      .filter((email) => !/\.(png|jpg|jpeg|gif|svg|webp)$/.test(email))
+  )].slice(0, 3);
+
+  const socialHosts = [
+    ["facebook.com", "facebook"],
+    ["instagram.com", "instagram"],
+    ["tiktok.com", "tiktok"],
+    ["linkedin.com", "linkedin"],
+    ["twitter.com", "x"],
+    ["x.com", "x"],
+    ["youtube.com", "youtube"]
+  ];
+  const socialLinks = [];
+  const seenPlatforms = new Set();
+  for (const match of html.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)) {
+    let link;
+    try {
+      link = new URL(match[1]);
+    } catch {
+      continue;
+    }
+    const host = link.hostname.replace(/^www\./, "");
+    const platform = socialHosts.find(([domain]) => host === domain || host.endsWith(`.${domain}`))?.[1];
+    // Bare platform homepages (share widgets) are not profile links.
+    if (!platform || seenPlatforms.has(platform) || link.pathname.length <= 1) continue;
+    seenPlatforms.add(platform);
+    socialLinks.push({ platform, url: link.href });
+  }
+
+  const hasContactForm = /<form\b/i.test(html) || /href=["'][^"']*contact[^"']*["']/i.test(html);
+  return { emails, socialLinks, hasContactForm, reason: null, pageUrl: url.href };
+}
 
 function noWebsiteAudit(place) {
   return {
@@ -83,7 +132,8 @@ function noWebsiteAudit(place) {
       phoneMatches: null,
       addressMatches: null,
       reason: "No website URL was available to compare against the Google listing."
-    }
+    },
+    contactPaths: { emails: [], socialLinks: [], hasContactForm: null, reason: "No website URL was available to check for contact paths." }
   };
 }
 
