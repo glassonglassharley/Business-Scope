@@ -35,7 +35,7 @@ export function computeProspectScore(input) {
   const viability = scoreViability(input.business, config);
   const momentum = scoreMomentum(input, config, now);
   const reachability = scoreReachability(input.channels, input.contactsConfirmedAbsent, config);
-  const disqualifyReasons = collectDisqualifiers(input, reachability, config);
+  const disqualifyReasons = collectDisqualifiers(input, reachability, config, weakness);
 
   const components = [
     { key: "weakness", weight: config.componentWeights.weakness, result: weakness },
@@ -230,10 +230,16 @@ function scoreReachability(channels, contactsConfirmedAbsent, config) {
   };
 }
 
-function collectDisqualifiers(input, reachability, config) {
+function collectDisqualifiers(input, reachability, config, weakness) {
   const reasons = [];
   if (input.business.businessStatus === "CLOSED_PERMANENTLY") reasons.push("permanently_closed");
   if (input.isChain) reasons.push("chain_or_franchise");
+
+  // Too little wrong to pitch. Only applied when weakness was actually
+  // measured — an unscanned business is unknown, not strong.
+  if (typeof weakness.score === "number" && weakness.score < config.disqualifiers.weaknessFloor) {
+    reasons.push("below_weakness_floor");
+  }
 
   // Both must hold: a strong blended score AND a genuinely strong website.
   // Either alone leaves something to sell.

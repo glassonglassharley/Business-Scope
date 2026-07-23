@@ -7,7 +7,7 @@
 export const prospectScoringConfig = {
   // Stamped into prospect_scores.weights_version so every row says which
   // config produced it. Bump on every tuning change.
-  weightsVersion: "v2",
+  weightsVersion: "v2.1",
 
   // PRIVATE re-weighting of the same category measurements the public
   // presence score is built from. The public score weights Google-listing
@@ -114,7 +114,17 @@ export const prospectScoringConfig = {
     // 81-89 included sites with no HTTPS, no title and no meta description,
     // carried there by an immaculate Google listing. Requiring the website
     // itself to be strong stops those being thrown away.
-    strongTechnicalHealth: 90
+    strongTechnicalHealth: 90,
+
+    // Independent of the two conditions above: below this much weakness there
+    // is not enough wrong to build a pitch around, however well the business
+    // scores on ability to pay. Reported as its own reason code so what it
+    // cuts stays visible.
+    //
+    // Only meaningful since weakness moved to the private category weighting
+    // (v2) — under v1 weakness barely varied, so a floor would have been
+    // arbitrary. Observed v2 range across 79 businesses: 8 to 89.
+    weaknessFloor: 12
   },
 
   // A business with no automatically discoverable contact channel is normally
