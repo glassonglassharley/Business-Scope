@@ -18,7 +18,8 @@ import { prospectScoringConfig } from "./prospectingConfig.mjs";
  *   business: { name: string, businessStatus: string|null, rating: number|null,
  *               reviewCount: number|null, websiteUrl: string|null, claimed?: boolean|null },
  *   latestScan: { presenceScore: number|null, reviewCount: number|null, latestReviewAt: string|null,
- *                 scannedAt: string, signals?: object }|null,
+ *                 scannedAt: string, signals?: object,
+ *                 categoryScores?: Record<string, number|null> }|null,
  *   previousScan: { reviewCount: number|null, scannedAt: string }|null,
  *   channels: Array<{ channelType: string, status: string, lastActivityAt: string|null }>,
  *   contactsConfirmedAbsent: boolean,
@@ -30,7 +31,7 @@ export function computeProspectScore(input) {
   const config = prospectScoringConfig;
   const now = input.now || new Date();
 
-  const weakness = scoreWeakness(input.latestScan);
+  const weakness = scoreWeakness(input.latestScan, config);
   const viability = scoreViability(input.business, config);
   const momentum = scoreMomentum(input, config, now);
   const reachability = scoreReachability(input.channels, input.contactsConfirmedAbsent, config);
@@ -79,14 +80,48 @@ export function computeProspectScore(input) {
 
 // --------------------------------------------------------------------------
 
-function scoreWeakness(latestScan) {
-  if (typeof latestScan?.presenceScore !== "number") {
-    return { score: null, completeness: 0, detail: { status: "unmeasured", reason: "No deep scan yet — presence score unknown." } };
+/**
+ * Weakness re-weights the SAME per-category measurements the public presence
+ * score is built from, using the private weighting in config: the website
+ * carries most of the weight because a broken website is what the offer
+ * fixes. The public presence_score is never modified — only re-weighted here.
+ * Falls back to inverting the blended public score when a scan predates
+ * category capture.
+ */
+function scoreWeakness(latestScan, config) {
+  if (!latestScan) {
+    return { score: null, completeness: 0, detail: { status: "unmeasured", reason: "No deep scan yet." } };
   }
+
+  const categoryScores = latestScan.categoryScores || {};
+  const weights = config.weakness.categoryWeights;
+  const measured = Object.entries(weights).filter(([key]) => typeof categoryScores[key] === "number");
+  const measuredWeight = measured.reduce((sum, [, weight]) => sum + weight, 0);
+  const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+
+  if (!measured.length) {
+    if (typeof latestScan.presenceScore !== "number") {
+      return { score: null, completeness: 0, detail: { status: "unmeasured", reason: "Scan recorded no category scores or presence score." } };
+    }
+    return {
+      score: round2(100 - latestScan.presenceScore),
+      completeness: 0.5,
+      detail: { status: "measured", basis: "public_presence_score_fallback", presenceScore: latestScan.presenceScore }
+    };
+  }
+
+  // Weights renormalize over measured categories, so an unbuilt scanner is
+  // excluded rather than counted as a zero — same rule as everywhere else.
+  const health = measured.reduce((sum, [key, weight]) => sum + categoryScores[key] * (weight / measuredWeight), 0);
   return {
-    score: round2(100 - latestScan.presenceScore),
-    completeness: 1,
-    detail: { status: "measured", presenceScore: latestScan.presenceScore }
+    score: round2(100 - health),
+    completeness: measuredWeight / totalWeight,
+    detail: {
+      status: "measured",
+      basis: "private_category_weighting",
+      categoryScores: Object.fromEntries(measured.map(([key]) => [key, categoryScores[key]])),
+      publicPresenceScore: latestScan.presenceScore ?? null
+    }
   };
 }
 
@@ -199,10 +234,16 @@ function collectDisqualifiers(input, reachability, config) {
   const reasons = [];
   if (input.business.businessStatus === "CLOSED_PERMANENTLY") reasons.push("permanently_closed");
   if (input.isChain) reasons.push("chain_or_franchise");
-  if (typeof input.latestScan?.presenceScore === "number"
-    && input.latestScan.presenceScore >= config.disqualifiers.strongPresenceScore) {
+
+  // Both must hold: a strong blended score AND a genuinely strong website.
+  // Either alone leaves something to sell.
+  const presence = input.latestScan?.presenceScore;
+  const technicalHealth = input.latestScan?.categoryScores?.technicalHealth;
+  if (typeof presence === "number" && presence >= config.disqualifiers.strongPresenceScore
+    && typeof technicalHealth === "number" && technicalHealth >= config.disqualifiers.strongTechnicalHealth) {
     reasons.push("strong_presence");
   }
+
   if (reachability.factor === 0) reasons.push("no_contact_method");
   return reasons;
 }

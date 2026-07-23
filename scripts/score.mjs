@@ -84,7 +84,7 @@ async function recompute() {
 
     for (const target of targets.rows) {
       const scans = await db.query(
-        `select id, presence_score, review_count, latest_review_at, scanned_at, signals
+        `select id, presence_score, review_count, latest_review_at, scanned_at, signals, score_breakdown
          from scans where place_id = $1 order by scanned_at desc limit 2`,
         [target.place_id]
       );
@@ -99,7 +99,9 @@ async function recompute() {
             reviewCount: scans.rows[0].review_count,
             latestReviewAt: scans.rows[0].latest_review_at,
             scannedAt: scans.rows[0].scanned_at,
-            signals: scans.rows[0].signals || {}
+            signals: scans.rows[0].signals || {},
+            // Per-category scores the private weakness weighting re-weights.
+            categoryScores: categoryScoresFrom(scans.rows[0].score_breakdown)
           }
         : null;
       const previousScan = scans.rows[1]
@@ -276,6 +278,16 @@ function demo() {
   }
   console.log("(Chains and permanently-closed businesses never get this far — the discovery pre-filter disqualifies them before any deep scan.)");
   process.exit(0);
+}
+
+/** Pulls { categoryKey: score } out of a stored public score_breakdown. */
+function categoryScoresFrom(breakdown) {
+  if (!breakdown?.categories) return {};
+  return Object.fromEntries(
+    breakdown.categories
+      .filter((category) => category.status === "measured" && typeof category.score === "number")
+      .map((category) => [category.key, category.score])
+  );
 }
 
 function isConfiguredChain(name) {

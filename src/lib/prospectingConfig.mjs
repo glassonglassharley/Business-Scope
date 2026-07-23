@@ -7,7 +7,29 @@
 export const prospectScoringConfig = {
   // Stamped into prospect_scores.weights_version so every row says which
   // config produced it. Bump on every tuning change.
-  weightsVersion: "v1",
+  weightsVersion: "v2",
+
+  // PRIVATE re-weighting of the same category measurements the public
+  // presence score is built from. The public score weights Google-listing
+  // hygiene at roughly 59% and the website at roughly 16% — correct for a
+  // customer-facing report, backwards for prospecting, where the broken
+  // website IS the thing being sold. Weakness therefore re-weights the same
+  // per-category scores rather than inverting the blended public score.
+  //
+  // The public presence_score is untouched by this and must stay that way.
+  //
+  // customerSignals is deliberately absent: review volume and rating are
+  // ability-to-pay signals and already drive viability. Counting them here
+  // too would double-count them.
+  weakness: {
+    categoryWeights: {
+      technicalHealth: 0.45,
+      onlinePresence: 0.2,
+      contentFreshness: 0.15,
+      discoveryStrength: 0.15,
+      dataAccuracy: 0.05
+    }
+  },
 
   // prospect_score = (weakness*w + viability*w + momentum*w) * reachability.
   // Component weights renormalize over MEASURED components only, so an
@@ -85,7 +107,14 @@ export const prospectScoringConfig = {
     // credible "your site is costing you customers" pitch.
     // Re-check this number whenever the scanner set changes: it is a property
     // of what the engine currently measures, not a universal constant.
-    strongPresenceScore: 90
+    strongPresenceScore: 90,
+
+    // BOTH conditions must hold to disqualify. A high blended presence score
+    // on its own is not enough: measured 2026-07-23, businesses at presence
+    // 81-89 included sites with no HTTPS, no title and no meta description,
+    // carried there by an immaculate Google listing. Requiring the website
+    // itself to be strong stops those being thrown away.
+    strongTechnicalHealth: 90
   },
 
   // A business with no automatically discoverable contact channel is normally
