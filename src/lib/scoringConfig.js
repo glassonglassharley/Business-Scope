@@ -1,7 +1,7 @@
 export const scoringConfig = {
   baseCategories: {
     gbp: {
-      label: "Google Business Profile completeness",
+      label: "Google Business Profile strength",
       max: 25
     },
     accuracy: {
@@ -27,7 +27,7 @@ export const scoringConfig = {
   },
   foodCategories: {
     gbp: {
-      label: "Google Business Profile completeness",
+      label: "Google Business Profile strength",
       max: 20
     },
     accuracy: {

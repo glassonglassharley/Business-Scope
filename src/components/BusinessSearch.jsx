@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 const DEFAULT_INDUSTRY = "Other Local Business";
 
-// In-app scan version: resolves Google Places candidates server-side, then runs the existing StreetSignal audit pipeline.
+// In-app scan version: resolves Google Places candidates server-side, then runs the existing StreetSignal audit flow.
 export function BusinessSearch({ onAuditComplete }) {
   const [businessName, setBusinessName] = useState("");
   const [location, setLocation] = useState("");
@@ -227,34 +227,34 @@ export function BusinessSearch({ onAuditComplete }) {
 }
 
 function formDataFromPlacesResult(result, websiteAudit) {
-  const prospect = result.prospect;
+  const scan = result.scan;
   return {
-    businessName: prospect.businessName,
-    city: prospect.city || result.place?.address || "",
-    industry: prospect.industry || DEFAULT_INDUSTRY,
-    websiteStatus: prospect.website.status,
-    mobileFriendly: prospect.website.mobileFriendly,
-    loadsFast: prospect.website.loadsFast,
-    hasSsl: prospect.website.hasSsl,
-    gbpClaimed: prospect.googleBusinessProfile.claimed,
-    gbpHours: prospect.googleBusinessProfile.hoursListed,
-    gbpPhotos: prospect.googleBusinessProfile.photosPresent,
-    gbpDescription: prospect.googleBusinessProfile.descriptionFilled,
-    gbpPrimaryCategory: prospect.googleBusinessProfile.primaryCategorySet,
-    hoursAccurate: prospect.accuracy.hoursAccurate,
-    phoneAccurate: prospect.accuracy.phoneAccurate,
-    addressAccurate: prospect.accuracy.addressAccurate,
-    servicesAccurate: prospect.accuracy.servicesAccurate,
-    averageRating: prospect.reviews.averageRating,
-    reviewCount: prospect.reviews.count,
-    mapsTopThree: prospect.localVisibility.mapsTopThree,
-    menuAccurate: prospect.ordering.menuAccurate,
-    deliveryAppsListed: prospect.ordering.deliveryAppsListed,
-    deliveryItemsHavePhotos: prospect.ordering.deliveryItemsHavePhotos,
-    onlineOrderingWorks: prospect.ordering.onlineOrderingWorks,
-    clickToCall: prospect.contact.clickToCall,
-    quoteForm: prospect.contact.quoteForm,
-    repliesFast: prospect.contact.repliesFast,
+    businessName: scan.businessName,
+    city: scan.city || result.place?.address || "",
+    industry: scan.industry || DEFAULT_INDUSTRY,
+    websiteStatus: scan.website.status,
+    mobileFriendly: scan.website.mobileFriendly,
+    loadsFast: scan.website.loadsFast,
+    hasSsl: scan.website.hasSsl,
+    gbpClaimed: scan.googleBusinessProfile.claimed,
+    gbpHours: scan.googleBusinessProfile.hoursListed,
+    gbpPhotos: scan.googleBusinessProfile.photosPresent,
+    gbpDescription: scan.googleBusinessProfile.descriptionFilled,
+    gbpPrimaryCategory: scan.googleBusinessProfile.primaryCategorySet,
+    hoursAccurate: scan.accuracy.hoursAccurate,
+    phoneAccurate: scan.accuracy.phoneAccurate,
+    addressAccurate: scan.accuracy.addressAccurate,
+    servicesAccurate: scan.accuracy.servicesAccurate,
+    averageRating: scan.reviews.averageRating,
+    reviewCount: scan.reviews.count,
+    mapsTopThree: scan.localVisibility.mapsTopThree,
+    menuAccurate: scan.ordering.menuAccurate,
+    deliveryAppsListed: scan.ordering.deliveryAppsListed,
+    deliveryItemsHavePhotos: scan.ordering.deliveryItemsHavePhotos,
+    onlineOrderingWorks: scan.ordering.onlineOrderingWorks,
+    clickToCall: scan.contact.clickToCall,
+    quoteForm: scan.contact.quoteForm,
+    repliesFast: scan.contact.repliesFast,
     dataSource: "google_places",
     googlePlaces: result.place,
     placesScoreBreakdown: result.scoreBreakdown,

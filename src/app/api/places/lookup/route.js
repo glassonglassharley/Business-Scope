@@ -1,5 +1,8 @@
-import { GooglePlacesProvider } from "@/lib/prospectData";
-import { calculateBusinessHealthScore } from "@/lib/scoring";
+// Relative imports (not @/ alias) so the leak test can invoke this handler
+// directly under Node. Responses are built field-by-field — provider results
+// are never passed through wholesale.
+import { GooglePlacesProvider } from "../../../../lib/prospectData.js";
+import { calculateBusinessHealthScore } from "../../../../lib/scoring.js";
 
 export async function POST(request) {
   let body = {};
@@ -18,10 +21,13 @@ export async function POST(request) {
       });
 
       if (!candidatesResult.ok) {
-        return Response.json(candidatesResult, { status: statusForPlacesError(candidatesResult.error?.code) });
+        return Response.json(
+          { ok: false, source: "google_places", error: candidatesResult.error },
+          { status: statusForPlacesError(candidatesResult.error?.code) }
+        );
       }
 
-      return Response.json(candidatesResult);
+      return Response.json({ ok: true, source: "google_places", candidates: candidatesResult.candidates, error: null });
     }
 
     const result = await GooglePlacesProvider.getProspectData({
@@ -32,14 +38,17 @@ export async function POST(request) {
     });
 
     if (!result.ok) {
-      return Response.json(result, { status: statusForPlacesError(result.error?.code) });
+      return Response.json(
+        { ok: false, source: "google_places", error: result.error },
+        { status: statusForPlacesError(result.error?.code) }
+      );
     }
 
     const scoreBreakdown = calculateBusinessHealthScore(result.prospect);
     return Response.json({
       ok: true,
       source: "google_places",
-      prospect: result.prospect,
+      scan: result.prospect,
       place: result.place,
       scoreBreakdown
     });

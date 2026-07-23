@@ -19,8 +19,8 @@ export function AuditDashboard({ audits, selectedAuditId, onSelect, settings, on
       <div className="panel overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-line px-5 py-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="eyebrow">Prospect pipeline</p>
-            <h2 className="mt-1 text-2xl font-black text-ink">Checkup Pipeline</h2>
+            <p className="eyebrow">Owner dashboard</p>
+            <h2 className="mt-1 text-2xl font-black text-ink">Checkup Queue</h2>
             <p className="mt-1 text-sm text-slate-600">Lowest scores are the clearest cleanup opportunities.</p>
           </div>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700">

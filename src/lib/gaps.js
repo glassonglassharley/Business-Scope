@@ -28,7 +28,7 @@ export function generateGaps(prospect, score) {
       priority: 91,
       title: isFoodBusiness
         ? "Menu confusion makes customers question whether ordering is worth it"
-        : "Unclear service information makes good prospects self-select out",
+        : "Unclear service information makes good customers self-select out",
       body: isFoodBusiness
         ? "Customers want to know what is available, what it costs, and how to order. Stale menu details create friction exactly when appetite should turn into revenue."
         : "If the services, offers, or service area are unclear, customers often assume you do not handle their need and keep searching."
@@ -143,7 +143,7 @@ export function generateGaps(prospect, score) {
 
   if (score.categories.find((category) => category.key === "gbp")?.points < 16) {
     gaps.push({
-      id: "gbp-completeness",
+      id: "gbp-basics",
       priority: 70,
       title: "An incomplete Google profile gives customers fewer reasons to choose you",
       body:
