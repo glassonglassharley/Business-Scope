@@ -12,6 +12,10 @@ export function SampleReport({ checkedDate }) {
         <div className="report-score" aria-label="Business Health Score 68 out of 100">68</div>
       </div>
 
+      <div className="category-score-grid">
+        {SAMPLE_CATEGORY_SCORES.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
+      </div>
+
       <div className="fix-first">
         <p className="eyebrow">Fix First</p>
         <h3>Repair the booking link.</h3>
@@ -20,10 +24,6 @@ export function SampleReport({ checkedDate }) {
 
       <div className="grid gap-4">
         {SAMPLE_FINDINGS.map((finding, index) => <FindingCard key={finding.title} finding={finding} index={index + 1} checkedDate={checkedDate} />)}
-      </div>
-
-      <div className="category-score-grid">
-        {SAMPLE_CATEGORY_SCORES.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
       </div>
     </section>
   );
