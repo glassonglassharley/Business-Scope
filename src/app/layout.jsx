@@ -1,28 +1,43 @@
-import { BRAND, TAGLINE } from "@/lib/brand";
+import { BRAND, SITE_URL, TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
-const description = "See where your online presence is costing you calls and customers. Get a free 0\u2013100 snapshot with the top fixes that matter most.";
-const title = `${BRAND} \u2014 ${TAGLINE}`;
-const url = "https://business-scope.vercel.app/";
+const description = "Find inaccurate business details, broken customer links, trust gaps, and other public-facing issues that may be costing your local business calls, visits, and bookings.";
+const title = `${BRAND} | ${TAGLINE}`;
 
 export const metadata = {
-  metadataBase: new URL(url),
-  title,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: title,
+    template: `%s | ${BRAND}`
+  },
   description,
   alternates: {
-    canonical: url
+    canonical: SITE_URL
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png"
   },
   openGraph: {
     type: "website",
     siteName: BRAND,
     title,
     description,
-    url
+    url: SITE_URL,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${BRAND} local business presence checkup preview`
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
     title,
-    description
+    description,
+    images: ["/opengraph-image"]
   }
 };
 

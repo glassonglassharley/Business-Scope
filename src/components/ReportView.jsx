@@ -8,6 +8,7 @@ import { BRAND } from "@/lib/brand";
 
 export function ReportView({ audit, preparerName, sharedMode = false }) {
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
+  const [summaryStatus, setSummaryStatus] = useState("Copy report summary");
   const band = bandForScore(audit.score.total);
   const reportPreparer = preparerName || BRAND;
   const categoryLabels = getScoringCategories(audit);
@@ -30,11 +31,19 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
     window.setTimeout(() => setCopyStatus("Copy Share Link"), 1600);
   }
 
+  async function copySummary() {
+    const summary = buildReportSummary(audit);
+    await navigator.clipboard.writeText(summary);
+    setSummaryStatus("Summary copied");
+    window.setTimeout(() => setSummaryStatus("Copy report summary"), 1600);
+  }
+
   return (
     <article className="print-page mx-auto max-w-5xl overflow-hidden rounded-lg border border-line bg-surface shadow-soft">
       <div className="no-print grid gap-2 border-b border-line bg-paper px-4 py-4 sm:flex sm:justify-end sm:px-5">
         {!sharedMode && <button className="secondary-button w-full py-2 sm:w-auto" onClick={copyLink}>{copyStatus}</button>}
-        <button className="primary-button w-full py-2 sm:w-auto" onClick={() => window.print()}>Export PDF</button>
+        <button className="secondary-button w-full py-2 sm:w-auto" onClick={copySummary}>{summaryStatus}</button>
+        <button className="primary-button w-full py-2 sm:w-auto" onClick={() => window.print()}>Print / save PDF</button>
       </div>
 
       <header className="grid gap-5 border-b border-line p-5 sm:p-7 md:grid-cols-[1fr_240px] md:items-center">
@@ -143,7 +152,7 @@ function PlacesHealthSection({ breakdown }) {
           <p className="eyebrow">Business Health Score</p>
           <h3 className="mt-2 text-2xl font-black text-ink">Google Places scan</h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            This score uses measured scanner results. Categories without a real scanner are marked not yet measured; scanner outages are marked separately so the score is clear when provisional.
+            Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.
           </p>
           {breakdown.hasScanError && (
             <p className="mt-3 rounded-md border border-signal-amber/40 bg-signal-amber/10 p-3 text-sm font-bold leading-6 text-slate-700">
@@ -154,7 +163,7 @@ function PlacesHealthSection({ breakdown }) {
         <div className="rounded-lg border border-line bg-nested-surface p-4 text-left sm:text-right">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Overall score</div>
           <div className="mt-1 text-3xl font-black text-ink">{breakdown.overallScore ?? 0}/100</div>
-          <div className="mt-1 text-xs font-bold text-slate-500">Measured coverage: {breakdown.availableWeight}/100</div>
+          <div className="mt-1 text-xs font-bold text-slate-500">Checks completed: {breakdown.availableWeight}%</div>
         </div>
       </div>
 
@@ -178,7 +187,7 @@ function PlacesCategoryCard({ category }) {
   const measured = category.status === "measured";
   const unavailable = category.status === "scan_unavailable";
   const band = measured ? bandForScore(category.score) : null;
-  const statusText = measured ? `Weight ${category.weight}% after renormalization` : unavailable ? "Scan unavailable - could not run this check" : "Not yet measured";
+  const statusText = measured ? "Completed check" : unavailable ? "Unavailable - could not run this check" : "Not included in this checkup";
   const scoreText = measured ? category.score : unavailable ? "Unavailable" : "Pending";
   const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-slate-500";
 
@@ -204,7 +213,7 @@ function PlacesCategoryCard({ category }) {
         {category.metrics.map((metric) => (
           <div key={metric.id} className="min-w-0 rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
             <div className="font-black text-ink">{metric.label}</div>
-            <div className="mt-1 break-words">{metric.score === null ? "Not available from this scan" : `${metric.score}/100`} - {metric.note}</div>
+            <div className="mt-1 break-words">{metric.score === null ? "Not available from this checkup" : `${metric.score}/100`} - {metric.note}</div>
           </div>
         ))}
       </div>
@@ -347,6 +356,22 @@ function FixCard({ title, body }) {
       <p className="mt-2 text-sm leading-6 text-slate-700">{body}</p>
     </div>
   );
+}
+
+function buildReportSummary(audit) {
+  const lines = [
+    `${audit.businessName} — ${BRAND} checkup`,
+    `Score: ${audit.score.total}/100`,
+    `Prepared: ${formatDate(audit.createdAt)}`,
+    "",
+    "Top findings:"
+  ];
+  audit.gaps.slice(0, 3).forEach((gap, index) => {
+    lines.push(`${index + 1}. ${gap.title} — ${gap.body}`);
+  });
+  const nextFix = audit.score?.breakdown?.prioritizedIssues?.[0]?.suggestedFix || audit.gaps[0]?.body || "Review the highest-impact public-facing issue first.";
+  lines.push("", `Fix first: ${nextFix}`);
+  return lines.join("\n");
 }
 
 

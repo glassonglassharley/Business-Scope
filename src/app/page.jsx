@@ -5,10 +5,9 @@ import { AuditDashboard } from "@/components/AuditDashboard";
 import { BusinessSearch } from "@/components/BusinessSearch";
 import { NewAuditForm } from "@/components/NewAuditForm";
 import { ReportView } from "@/components/ReportView";
-import { BRAND, OFFER } from "@/lib/brand";
+import { BRAND, CONTACT_EMAIL, OFFER, SITE_DESCRIPTOR, SITE_URL } from "@/lib/brand";
 import { getAudits, saveAudit, seedAuditsIfEmpty } from "@/lib/auditStore";
 import { buildAudit } from "@/lib/buildAudit";
-import { bandForScore, calculateBusinessHealthScore } from "@/lib/scoring";
 import { decodeAuditFromUrl } from "@/lib/shareLinks";
 
 const SETTINGS_KEY = "digitalHealthScore.settings.v1";
@@ -18,43 +17,100 @@ const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
 const defaultSettings = {
   preparerName: BRAND
 };
-const sampleSnapshotBreakdown = calculateBusinessHealthScore({
-  googlePlaces: {
-    address: "123 Sample Street, Riverside, CA 92501, USA",
-    phone: "+1 951-555-0100",
-    openingHours: { openNow: true, weekdayText: ["Monday: 9:00 AM - 5:00 PM"] },
-    website: "https://example.com/",
-    photosCount: 0,
-    types: ["local_service"],
-    claimedOrVerified: null,
-    rating: 3.8,
-    reviewCount: 18
+
+const problemCards = [
+  { title: "Conflicting business hours", body: "Conflicting hours can cause customers to arrive when the business is closed.", status: "High" },
+  { title: "Broken booking or ordering links", body: "A broken booking link can stop an interested customer at the final step.", status: "Critical" },
+  { title: "Missing services or categories", body: "Missing services can keep the business from appearing for the searches customers actually use.", status: "Medium" },
+  { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High" }
+];
+
+const checkGroups = [
+  {
+    title: "Business Details",
+    items: ["Business name", "Address", "Phone number", "Business hours", "Website", "Service area", "Major public listings"]
   },
-  websiteAudit: {
-    status: "measured",
-    websiteUrl: "http://example.com/",
-    reachable: { value: true, status: 200, timingMs: 420, reason: null },
-    https: { servedOverHttps: false, validCertificate: null, httpRedirectsToHttps: false, httpRedirectReason: "The HTTP version did not redirect to HTTPS." },
-    html: {
-      titlePresent: true,
-      metaDescriptionPresent: false,
-      viewportPresent: true,
-      singleH1: true,
-      faviconPresent: false,
-      reason: null
-    },
-    performance: {
-      performanceScore: null,
-      mobileFriendly: null,
-      reason: "GOOGLE_PSI_API_KEY is not set, so PageSpeed Insights was skipped."
-    },
-    nap: {
-      phoneMatches: null,
-      addressMatches: null,
-      reason: "Could not confirm on homepage."
-    }
+  {
+    title: "Customer Trust",
+    items: ["Review recency", "Review responses", "Photos", "Profile depth", "Description quality", "Category selection", "Conflicting information"]
+  },
+  {
+    title: "Customer Actions",
+    items: ["Call buttons", "Directions", "Booking links", "Ordering links", "Quote forms", "Menu links", "Mobile usability", "Dead or redirected links"]
   }
-});
+];
+
+const sampleFindings = [
+  {
+    title: "Saturday hours differ across two public listings.",
+    severity: "High",
+    impact: "Customers may arrive after the business has closed.",
+    source: "Google Business Profile + website footer",
+    valueFound: "Google: closes 5:00 PM; website: closes 3:00 PM",
+    expectedValue: "One confirmed Saturday closing time",
+    confidence: "High",
+    action: "Confirm Saturday hours and update every public listing from the same source of truth.",
+    status: "Open"
+  },
+  {
+    title: "The main booking link returns an error.",
+    severity: "Critical",
+    impact: "Mobile visitors cannot complete an appointment.",
+    source: "Website booking button",
+    valueFound: "Booking URL returns an error page",
+    expectedValue: "Working appointment destination",
+    confidence: "High",
+    action: "Repair or replace the booking URL, then test it from a phone.",
+    status: "Open"
+  },
+  {
+    title: "Two primary services are missing from the Google Business Profile.",
+    severity: "Medium",
+    impact: "The business may not appear for relevant searches.",
+    source: "Google Business Profile services",
+    valueFound: "Emergency repairs and weekend appointments not listed",
+    expectedValue: "Core services listed in the profile and website",
+    confidence: "Medium",
+    action: "Add the missing services and align the wording with the website.",
+    status: "Needs verification"
+  }
+];
+
+const categoryScores = [
+  ["Information Accuracy", 82],
+  ["Search Visibility", 67],
+  ["Customer Trust", 71],
+  ["Conversion Paths", 45]
+];
+
+const howItWorks = [
+  "Find and confirm your business.",
+  "StreetSignal checks the public customer journey.",
+  "Review issues ranked by likely customer impact.",
+  "Fix them yourself or request help."
+];
+
+const trustPoints = [
+  "No Google password required",
+  "No listing access required for the initial scan",
+  "No changes made without approval",
+  "Public sources shown with each finding",
+  "Clear timestamps",
+  "No fabricated revenue-loss claims"
+];
+
+const faqs = [
+  ["What information does StreetSignal need?", "A business name and city or area are needed to find the right public listing. If you request follow-up, the form may also ask for a contact method and any notes you choose to provide."],
+  ["Does StreetSignal need access to my Google account?", "No. The initial checkup reads public-facing information and does not require a Google password or listing access."],
+  ["Is the checkup free?", "The initial checkup is free. If you want help correcting issues, StreetSignal can provide a clearly scoped cleanup plan. Ongoing monitoring can be offered separately."],
+  ["How is the score calculated?", "The score is a diagnostic guide based on public details, trust signals, and customer-action paths StreetSignal can check. Unavailable checks are identified separately and do not automatically lower the score."],
+  ["What sources are checked?", "The current live flow uses public listing data such as Google Places and website checks when available. The sample report shows the broader diagnostic structure StreetSignal is designed around."],
+  ["How long does the checkup take?", "The live form attempts an initial public-presence scan after you confirm the business. If a source is unavailable, StreetSignal shows a partial or failed state instead of pretending the scan completed."],
+  ["Can StreetSignal fix the issues?", "Yes, cleanup help can be scoped after the initial checkup. StreetSignal does not make listing or website changes without approval."],
+  ["Will I receive a sales call?", "The initial scan does not require an account. If you submit contact information for follow-up, StreetSignal may use it to respond about the checkup or cleanup request."],
+  ["What types of businesses can be checked?", "StreetSignal is best suited for local businesses customers contact, visit, book, or order from, including service businesses, restaurants, shops, clinics, and appointment-based businesses."],
+  ["What happens if StreetSignal finds multiple business locations?", "You must choose and confirm the correct listing before the checkup runs. This prevents scanning the wrong location." ]
+];
 
 export default function Home() {
   const [audits, setAudits] = useState([]);
@@ -63,6 +119,7 @@ export default function Home() {
   const [view, setView] = useState("splash");
   const [settings, setSettings] = useState(defaultSettings);
   const [ownerMode, setOwnerMode] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -101,6 +158,7 @@ export default function Home() {
     setSelectedAuditId(audit.id);
     setSharedAudit(null);
     setView("report");
+    requestAnimationFrame(() => document.getElementById("report-top")?.scrollIntoView({ block: "start" }));
   }
 
   function handleSettingsChange(nextSettings) {
@@ -108,27 +166,46 @@ export default function Home() {
     window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings));
   }
 
+  const navItems = [
+    ["How It Works", "#how-it-works"],
+    ["Sample Report", "#sample-report"],
+    ["What We Check", "#what-we-check"],
+    ["FAQ", "#faq"],
+    ["Run a Checkup", "#business-search"]
+  ];
+
   return (
     <main className="min-h-screen">
-      <header className="no-print sticky top-0 z-20 border-b border-line bg-surface/92 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <button className="text-left" aria-label={`${BRAND} home`} onClick={() => setView("splash")}>
-            <span className="block text-2xl font-black uppercase leading-none tracking-[0.16em] text-ink md:text-3xl">{BRAND}</span>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildSchema()) }} />
+      <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5">
+          <button className="wordmark" aria-label={`${BRAND} home`} onClick={() => setView("splash")}>
+            <span className="wordmark-mark" aria-hidden="true">SS</span>
+            <span>{BRAND}</span>
           </button>
           {!sharedAudit && (
-            <nav className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0">
-              <button className={navClass(view === "splash")} onClick={() => setView("splash")}>Home</button>
-              <button className={navClass(view === "request")} onClick={() => setView("request")}>Get {OFFER_LABEL}</button>
-              {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Checkups</button>}
-              {ownerMode && <button className={navClass(view === "new")} onClick={() => setView("new")}>New Checkup</button>}
-              {ownerMode && <button className={navClass(view === "report")} disabled={!selectedAudit} onClick={() => setView("report")}>Sample Report</button>}
-            </nav>
+            <>
+              <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+                {view === "splash" && navItems.map(([label, href]) => <a key={label} className="nav-link" href={href}>{label}</a>)}
+                {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Checkups</button>}
+                {ownerMode && <button className={navClass(view === "new")} onClick={() => setView("new")}>New Checkup</button>}
+                {ownerMode && <button className={navClass(view === "report")} disabled={!selectedAudit} onClick={() => setView("report")}>Saved Report</button>}
+              </nav>
+              <button className="secondary-button lg:hidden" type="button" aria-expanded={mobileMenuOpen} aria-controls="mobile-menu" onClick={() => setMobileMenuOpen((open) => !open)}>
+                Menu
+              </button>
+            </>
           )}
         </div>
+        {mobileMenuOpen && view === "splash" && (
+          <nav id="mobile-menu" className="grid gap-2 border-t border-line bg-surface px-4 py-3 lg:hidden" aria-label="Mobile navigation">
+            {navItems.map(([label, href]) => <a key={label} className="nav-link" href={href} onClick={() => setMobileMenuOpen(false)}>{label}</a>)}
+          </nav>
+        )}
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
-        {view === "splash" && <PublicHome onRequest={() => setView("request")} onAuditComplete={handleCreateAudit} />}
+      <div id="report-top" className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
+        {view === "splash" && <PublicHome onRequest={() => document.getElementById("business-search")?.scrollIntoView({ block: "start" })} onAuditComplete={handleCreateAudit} />}
         {view === "request" && <VisibilitySnapshotRequest />}
 
         {ownerMode && view === "dashboard" && (
@@ -155,58 +232,351 @@ export default function Home() {
 }
 
 function PublicHome({ onRequest, onAuditComplete }) {
-  function focusBusinessSearch() {
-    const form = document.getElementById("business-search");
-    const input = document.getElementById("business-search-business");
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    form?.scrollIntoView({ block: "start", behavior: prefersReducedMotion ? "auto" : "smooth" });
-    window.setTimeout(() => input?.focus({ preventScroll: true }), prefersReducedMotion ? 0 : 350);
-  }
+  const checkedDate = useMemo(() => new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date()), []);
 
   return (
-    <div className="grid gap-5">
-      <section className="panel overflow-hidden bg-ink text-white">
-        <div className="px-5 py-6 sm:px-7 sm:py-7 md:px-9 md:py-9">
-          <h2 className="max-w-4xl text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-6xl">
-            Wrong details send ready customers <span className="text-brand-soft">somewhere else.</span>
-          </h2>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-200">
-            {BRAND} checks the public details customers rely on before they call, visit, book, or order. You get a plain-English snapshot and the first fixes that matter.
+    <div className="grid gap-8">
+      <section className="hero-grid">
+        <div className="hero-copy">
+          <p className="eyebrow">{SITE_DESCRIPTOR}</p>
+          <h1>Find the online mistakes costing you calls, visits, and bookings.</h1>
+          <p className="hero-subcopy">
+            {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
           </p>
           <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
-            <button className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:border-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30 sm:w-auto" onClick={focusBusinessSearch}>Start with a business name</button>
-            <a className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-black text-white/85 transition hover:border-white hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 sm:w-auto" href="#sample-snapshot">See a sample {OFFER}</a>
+            <a className="primary-button" href="#business-search">Check my business free</a>
+            <a className="secondary-button" href="#sample-report">See a sample checkup</a>
           </div>
-          <BusinessSearch onAuditComplete={onAuditComplete} />
+          <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
         </div>
-
-        <div className="grid border-t border-white/15 bg-white/6 md:grid-cols-3">
-          <ProofPoint title="Accuracy" body="Hours, phone, address, services, menus, and links." dark />
-          <ProofPoint title="Trust" body="Google profile, reviews, photos, and business details." dark />
-          <ProofPoint title="Action" body="Call, quote, booking, ordering, and lead paths." dark />
+        <DiagnosticPreview checkedDate={checkedDate} />
+        <div className="hero-form-wrap">
+          <BusinessSearch onAuditComplete={onAuditComplete} />
         </div>
       </section>
 
-      <WhatYouGet />
-      <SampleVisibilitySnapshot />
-      <NoPressure onRequest={onRequest} />
+      <ProblemSection />
+      <WhatWeCheck />
+      <SampleReport checkedDate={checkedDate} />
+      <HowScoringWorks />
+      <HowItWorks />
+      <TrustSection />
+      <PilotExample />
+      <OfferSection />
+      <FAQSection />
+      <FinalCTA onRequest={onRequest} />
       <SiteFooter />
     </div>
   );
 }
 
-function WhatYouGet() {
+function DiagnosticPreview({ checkedDate }) {
   return (
-    <section className="panel overflow-hidden">
-      <div className="border-b border-line bg-surface p-5">
-        <p className="eyebrow">What you get</p>
-        <h3 className="mt-3 text-2xl font-black text-ink">A plain-English snapshot, not a generic marketing report.</h3>
+    <aside className="diagnostic-preview" aria-label="Compact diagnostic result preview">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="eyebrow">Diagnostic preview</p>
+          <h2 className="mt-2 text-xl font-black text-ink">Public presence signal</h2>
+        </div>
+        <div className="score-orb" aria-label="Sample score 68 out of 100">68</div>
       </div>
-      <div className="grid md:grid-cols-3">
-        <PreviewLine label="Score" value="A simple 0-100 signal" />
-        <PreviewLine label="Gaps" value="What may be costing calls, visits, or orders" />
-        <PreviewLine label="Priorities" value="The first fixes that matter most" />
+      <div className="mt-5 grid gap-3">
+        <SignalRow label="Booking link" status="Critical" body="Error returned on mobile." />
+        <SignalRow label="Hours" status="High" body="Saturday mismatch found." />
+        <SignalRow label="Services" status="Medium" body="Two core services missing." />
       </div>
+      <div className="mt-5 rounded-xl border border-line bg-nested-surface p-4 text-sm leading-6 text-slate-700">
+        <strong className="text-ink">Fix First:</strong> Repair the booking link because it directly blocks customer action.
+      </div>
+      <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Sample checked: {checkedDate}</p>
+    </aside>
+  );
+}
+
+function SignalRow({ label, status, body }) {
+  return (
+    <div className="signal-row">
+      <span className={`severity-dot ${status.toLowerCase()}`} aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="font-black text-ink">{label} <span className="sr-only">severity</span><span className="text-xs uppercase tracking-[0.12em] text-slate-500">{status}</span></p>
+        <p className="text-sm leading-6 text-slate-700">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+function ProblemSection() {
+  return (
+    <section className="section-grid" id="problem">
+      <div>
+        <p className="eyebrow">Customer friction</p>
+        <h2>Customers cannot act on information they cannot trust.</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {problemCards.map((card) => <ProblemCard key={card.title} {...card} />)}
+      </div>
+    </section>
+  );
+}
+
+function ProblemCard({ title, body, status }) {
+  return (
+    <article className="panel-card">
+      <span className={`severity-pill ${status.toLowerCase()}`}>{status}</span>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  );
+}
+
+function WhatWeCheck() {
+  return (
+    <section id="what-we-check" className="panel-section scroll-mt-24">
+      <div className="section-heading">
+        <p className="eyebrow">What StreetSignal checks</p>
+        <h2>A structured look at the public customer journey.</h2>
+        <p>StreetSignal separates basic facts, trust signals, and customer-action paths so a business can see what to fix first.</p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {checkGroups.map((group) => (
+          <article key={group.title} className="check-group">
+            <h3>{group.title}</h3>
+            <ul>
+              {group.items.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SampleReport({ checkedDate }) {
+  return (
+    <section id="sample-report" className="sample-report scroll-mt-24">
+      <div className="report-header">
+        <div>
+          <p className="eyebrow">Sample Report · Fictional business</p>
+          <h2>Business Health Score: 68/100</h2>
+          <p>Sample business: Harbor City Dental. Three issues may be costing this business customers.</p>
+        </div>
+        <div className="report-score" aria-label="Business Health Score 68 out of 100">68</div>
+      </div>
+
+      <div className="fix-first">
+        <p className="eyebrow">Fix First</p>
+        <h3>Repair the booking link.</h3>
+        <p>It directly blocks customer action and can be corrected immediately.</p>
+      </div>
+
+      <div className="grid gap-4">
+        {sampleFindings.map((finding, index) => <FindingCard key={finding.title} finding={finding} index={index + 1} checkedDate={checkedDate} />)}
+      </div>
+
+      <div className="category-score-grid">
+        {categoryScores.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
+      </div>
+    </section>
+  );
+}
+
+function FindingCard({ finding, index, checkedDate }) {
+  return (
+    <article className="finding-card">
+      <div className="finding-title-row">
+        <span className="finding-number">{index}</span>
+        <div>
+          <h3>{finding.title}</h3>
+          <p><strong>Impact:</strong> {finding.impact}</p>
+        </div>
+        <span className={`severity-pill ${finding.severity.toLowerCase()}`}>{finding.severity}</span>
+      </div>
+      <dl className="finding-meta">
+        <div><dt>Source checked</dt><dd>{finding.source}</dd></div>
+        <div><dt>Checked</dt><dd>{checkedDate}</dd></div>
+        <div><dt>Value found</dt><dd>{finding.valueFound}</dd></div>
+        <div><dt>Expected value</dt><dd>{finding.expectedValue}</dd></div>
+        <div><dt>Confidence</dt><dd>{finding.confidence}</dd></div>
+        <div><dt>Status</dt><dd>{finding.status}</dd></div>
+      </dl>
+      <p className="recommended-action"><strong>Recommended action:</strong> {finding.action}</p>
+    </article>
+  );
+}
+
+function CategoryScore({ label, score }) {
+  return (
+    <div className="category-score-card">
+      <div className="flex items-center justify-between gap-3">
+        <h3>{label}</h3>
+        <span>{score}</span>
+      </div>
+      <div className="score-bar" aria-hidden="true"><div style={{ width: `${score}%` }} /></div>
+    </div>
+  );
+}
+
+function HowScoringWorks() {
+  return (
+    <section className="panel-section">
+      <div className="section-heading">
+        <p className="eyebrow">Score explanation</p>
+        <h2>Plain-English scoring, not internal math.</h2>
+        <p>Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.</p>
+      </div>
+      <div className="rounded-xl border border-line bg-nested-surface p-4 sm:p-5">
+        <p className="text-xl font-black text-ink">Checks completed: 76%</p>
+        <details className="faq-item mt-4">
+          <summary>How scoring works</summary>
+          <div className="faq-answer">
+            <p>StreetSignal reviews information accuracy, search visibility, customer trust, and conversion paths. More severe issues affect the score more because they are more likely to stop a customer from calling, visiting, booking, or ordering.</p>
+            <p>Incomplete checks are shown separately instead of being treated as confirmed problems. Priorities are ranked by customer impact, confidence, and how directly the issue blocks action.</p>
+            <p>The score is a diagnostic guide, not a guarantee of revenue.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section id="how-it-works" className="panel-section scroll-mt-24">
+      <div className="section-heading">
+        <p className="eyebrow">How it works</p>
+        <h2>Confirm the right business before the scan begins.</h2>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-4">
+        {howItWorks.map((step, index) => <StepCard key={step} number={index + 1} step={step} />)}
+      </div>
+      <div className="confirmation-example">
+        <p className="eyebrow">Business confirmation example</p>
+        <div className="grid gap-3 md:grid-cols-4">
+          <InfoBlock label="Business name" value="Harbor City Dental" />
+          <InfoBlock label="Address" value="1420 Harbor Avenue, San Diego, CA" />
+          <InfoBlock label="Category" value="Dental clinic" />
+          <InfoBlock label="Website" value="harborcitydental.example" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StepCard({ number, step }) {
+  return (
+    <article className="step-card">
+      <span>{number}</span>
+      <h3>{step}</h3>
+    </article>
+  );
+}
+
+function InfoBlock({ label, value }) {
+  return (
+    <div className="info-block">
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function TrustSection() {
+  return (
+    <section className="trust-section">
+      <div className="section-heading">
+        <p className="eyebrow">Trust boundary</p>
+        <h2>StreetSignal checks public-facing information. It does not need your passwords.</h2>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
+      </div>
+      <FounderPlaceholder />
+    </section>
+  );
+}
+
+function FounderPlaceholder() {
+  return (
+    <article className="operator-note">
+      {/* TODO: Replace this placeholder with real project-owner/founder details before publishing founder-specific copy. */}
+      <p className="eyebrow">Operator note</p>
+      <h3>Built for practical online cleanup, not vague marketing theater.</h3>
+      <p>StreetSignal is currently presented without a named founder bio because verified public founder details are not configured in the codebase yet.</p>
+    </article>
+  );
+}
+
+function PilotExample() {
+  return (
+    <section className="panel-section">
+      <div className="section-heading">
+        <p className="eyebrow">Proof structure</p>
+        <h2>Pilot Example</h2>
+        <p>This is clearly labeled as an example until verified client data is available.</p>
+      </div>
+      <CaseStudy title="Local restaurant presence cleanup" found={["Conflicting weekend hours", "An outdated menu link", "An unanswered ordering question"]} resolved={["Business details aligned", "Menu destination replaced", "Customer question answered"]} />
+    </section>
+  );
+}
+
+function CaseStudy({ title, found, resolved }) {
+  return (
+    <article className="case-study">
+      <h3>{title}</h3>
+      <div className="grid gap-4 md:grid-cols-2">
+        <CaseList title="Found" items={found} tone="red" />
+        <CaseList title="Resolved" items={resolved} tone="green" />
+      </div>
+    </article>
+  );
+}
+
+function CaseList({ title, items, tone }) {
+  return (
+    <div>
+      <h4>{title}</h4>
+      <ul>
+        {items.map((item) => <li key={item}><span className={`severity-dot ${tone}`} aria-hidden="true" />{item}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+function OfferSection() {
+  return (
+    <section className="offer-section">
+      <p className="eyebrow">Commercial path</p>
+      <h2>The initial checkup is free.</h2>
+      <p>If you want help correcting the issues, StreetSignal can provide a clearly scoped cleanup plan. Ongoing monitoring can be offered separately.</p>
+    </section>
+  );
+}
+
+function FAQSection() {
+  return (
+    <section id="faq" className="panel-section scroll-mt-24">
+      <div className="section-heading">
+        <p className="eyebrow">FAQ</p>
+        <h2>Clear answers before you run a checkup.</h2>
+      </div>
+      <div className="faq-list">
+        {faqs.map(([question, answer]) => (
+          <details className="faq-item" key={question}>
+            <summary>{question}</summary>
+            <div className="faq-answer"><p>{answer}</p></div>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA({ onRequest }) {
+  return (
+    <section className="final-cta">
+      <h2>See what customers see before they choose your business.</h2>
+      <button className="primary-button" type="button" onClick={onRequest}>Run my free checkup</button>
+      <p>No account or listing access required.</p>
     </section>
   );
 }
@@ -230,9 +600,9 @@ function VisibilitySnapshotRequest() {
     return (
       <section className="panel mx-auto max-w-2xl p-8 text-center">
         <p className="eyebrow">Request received</p>
-        <h2 className="mt-3 text-3xl font-black text-ink">Your {OFFER} request is ready.</h2>
+        <h1 className="mt-3 text-3xl font-black text-ink">Your {OFFER} request was saved on this device.</h1>
         <p className="mt-3 leading-7 text-slate-700">
-          This working version saves requests in the browser for now. The next production step is connecting this form to email or a small database.
+          This request form currently stores submissions in your browser. Configure a real contact destination before using it for customer intake.
         </p>
       </section>
     );
@@ -242,10 +612,8 @@ function VisibilitySnapshotRequest() {
     <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
       <div className="panel p-5 sm:p-7">
         <p className="eyebrow">Free {OFFER}</p>
-        <h2 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">See what customers see before they choose you.</h2>
-        <p className="mt-4 leading-7 text-slate-700">
-          Send the basics. We check the public details that affect trust, visibility, and action.
-        </p>
+        <h1 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">See what customers see before they choose you.</h1>
+        <p className="mt-4 leading-7 text-slate-700">Send the basics. StreetSignal checks public details that affect trust, visibility, and action.</p>
       </div>
 
       <form className="panel grid gap-4 p-5 sm:p-7" onSubmit={submit}>
@@ -260,173 +628,23 @@ function VisibilitySnapshotRequest() {
   );
 }
 
-function ProofPoint({ title, body, dark = false }) {
-  return (
-    <div className={dark ? "border-b border-white/15 p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0 md:border-white/15" : "border-b border-line p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"}>
-      <h3 className={dark ? "font-black text-white" : "font-black text-ink"}>{title}</h3>
-      <p className={dark ? "mt-2 text-sm leading-6 text-slate-300" : "mt-2 text-sm leading-6 text-slate-600"}>{body}</p>
-    </div>
-  );
-}
-
-function SampleVisibilitySnapshot() {
-  const [expanded, setExpanded] = useState(false);
-  const previewCategories = sampleSnapshotBreakdown.categories.slice(0, 3);
-
-  return (
-    <section id="sample-snapshot" className="scroll-mt-28 overflow-hidden rounded-lg border border-line bg-surface">
-      <div className="border-b border-line bg-nested-surface p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="eyebrow">See what your snapshot looks like</p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              A realistic sample generated by the same scoring engine as a live checkup. Business name and address are hidden.
-            </p>
-          </div>
-          <button
-            className="secondary-button w-full bg-surface sm:w-auto"
-            type="button"
-            aria-expanded={expanded}
-            aria-controls="sample-snapshot-details"
-            onClick={() => setExpanded((current) => !current)}
-          >
-            {expanded ? "Hide sample snapshot" : "View sample snapshot"}
-          </button>
-        </div>
-      </div>
-
-      <div className="p-5">
-        <div className="rounded-lg border border-line bg-nested-surface p-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Sample business - name hidden</p>
-              <h4 className="mt-2 text-2xl font-black text-ink">Business Health Score</h4>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-                Measured scanner results use renormalized weights. Categories without a built scanner are shown as not yet measured.
-              </p>
-              {!expanded && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {previewCategories.map((category) => (
-                    <span key={category.key} className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-black text-ink">
-                      {category.label}: {category.status === "measured" ? category.score : "Pending"}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <SampleOverallScore breakdown={sampleSnapshotBreakdown} />
-          </div>
-        </div>
-
-        {expanded && (
-          <div id="sample-snapshot-details">
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              {sampleSnapshotBreakdown.categories.map((category) => <SampleBreakdownCategory key={category.key} category={category} />)}
-            </div>
-
-            {sampleSnapshotBreakdown.prioritizedIssues.length > 0 && (
-              <div className="mt-4 rounded-lg border border-line bg-nested-surface p-4">
-                <h4 className="font-black text-ink">Prioritized next fixes</h4>
-                <div className="mt-3 grid gap-3">
-                  {sampleSnapshotBreakdown.prioritizedIssues.slice(0, 4).map((issue) => (
-                    <div key={issue.id} className="rounded-md border border-line bg-surface p-3">
-                      <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{issue.impact} impact</div>
-                      <p className="mt-1 font-black text-ink">{issue.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-700">{issue.suggestedFix}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-function SampleOverallScore({ breakdown }) {
-  const score = breakdown.overallScore ?? 0;
-  const band = bandForScore(score);
-
-  return (
-    <div className={`rounded-lg border-2 p-4 text-left sm:min-w-44 sm:text-right ${band.panelClass}`}>
-      <div className="text-xs font-black uppercase tracking-[0.14em]">Overall score</div>
-      <div className="mt-1 text-4xl font-black leading-none">{score}/100</div>
-      <div className="mt-2 text-xs font-black">Measured coverage: {breakdown.availableWeight}/100</div>
-    </div>
-  );
-}
-
-function SampleBreakdownCategory({ category }) {
-  const measured = category.status === "measured";
-  const unavailable = category.status === "scan_unavailable";
-  const band = measured ? bandForScore(category.score) : null;
-  const statusText = measured ? `Weight ${category.weight}% after renormalization` : unavailable ? "Scan unavailable - could not run this check" : "Not yet measured";
-  const scoreText = measured ? category.score : unavailable ? "Unavailable" : "Pending";
-  const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-slate-500";
-
-  return (
-    <div className="rounded-lg border border-line bg-surface p-4 shadow-soft">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h4 className="font-black text-ink">{category.label}</h4>
-          <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{statusText}</p>
-        </div>
-        <span className={scoreClass}>{scoreText}</span>
-      </div>
-      {measured && (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-          <div className={`h-full rounded-full ${band.fillClass}`} style={{ width: `${category.score}%` }} />
-        </div>
-      )}
-      <div className="mt-3 grid gap-2">
-        {category.metrics.slice(0, measured ? 4 : 1).map((metric) => (
-          <div key={metric.id} className="min-w-0 rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
-            <div className="font-black text-ink">{metric.label}</div>
-            <div className="mt-1 break-words">{metric.score === null ? "Not available from this scan" : `${metric.score}/100`} - {metric.note}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-function NoPressure({ onRequest }) {
-  return (
-    <section className="panel p-5">
-      <p className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">No pressure</p>
-      <p className="mt-2 text-sm leading-6 text-slate-700">
-        The first {OFFER} is just a starting point. If the gaps are useful, we can talk about fixing them.
-      </p>
-      <button className="primary-button mt-4 w-full sm:w-auto" onClick={onRequest}>Get my free {OFFER}</button>
-    </section>
-  );
-}
-
 function SiteFooter() {
   const year = new Date().getFullYear();
-
   return (
-    <footer className="flex flex-col gap-3 border-t border-line px-1 py-5 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="site-footer">
       <div>
         <p className="font-black text-ink">{BRAND}</p>
-        <p className="mt-1">&copy; {year} {BRAND}. All rights reserved.</p>
+        <p className="mt-1">&copy; {year} {BRAND}. Local business presence diagnostics.</p>
       </div>
-      <nav className="flex gap-4 font-bold">
-        <a className="hover:text-brand" href="/privacy">Privacy</a>
-        {/* TODO: Replace hello@example.com with the real inbox. */}
-        <a className="hover:text-brand" href="mailto:hello@example.com">Contact</a>
+      <nav className="flex flex-wrap gap-4 font-bold" aria-label="Footer navigation">
+        <a className="link" href="/privacy">Privacy</a>
+        <a className="link" href="/terms">Terms</a>
+        {CONTACT_EMAIL ? <a className="link" href={`mailto:${CONTACT_EMAIL}`}>Contact</a> : <span className="text-signal-red">Contact email not configured</span>}
       </nav>
     </footer>
   );
 }
-function PreviewLine({ label, value }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-line p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
-      <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{label}</span>
-      <span className="max-w-[260px] text-right text-sm font-bold leading-5 text-ink">{value}</span>
-    </div>
-  );
-}
+
 function Field({ label, children }) {
   return (
     <label className="block text-sm font-bold text-slate-700">
@@ -442,4 +660,36 @@ function navClass(active) {
     active ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink hover:border-brand hover:text-brand",
     "disabled:cursor-not-allowed disabled:opacity-40"
   ].join(" ");
+}
+
+function buildSchema() {
+  const faqEntities = faqs.map(([question, answer]) => ({
+    "@type": "Question",
+    name: question,
+    acceptedAnswer: { "@type": "Answer", text: answer }
+  }));
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: BRAND,
+        url: SITE_URL,
+        contactPoint: CONTACT_EMAIL ? [{ "@type": "ContactPoint", email: CONTACT_EMAIL, contactType: "customer support" }] : []
+      },
+      {
+        "@type": "WebApplication",
+        name: BRAND,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        url: SITE_URL,
+        description: "Local business public-presence diagnostic checkup for inaccurate details, trust gaps, and customer-action links."
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqEntities
+      }
+    ]
+  };
 }
