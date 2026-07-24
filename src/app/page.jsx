@@ -303,15 +303,6 @@ function HowItWorks() {
       <div className="grid gap-4 lg:grid-cols-4">
         {howItWorks.map((step, index) => <StepCard key={step} number={index + 1} step={step} />)}
       </div>
-      <div className="confirmation-example">
-        <p className="eyebrow">Business confirmation example</p>
-        <div className="grid gap-3 md:grid-cols-4">
-          <InfoBlock label="Business name" value="Harbor City Dental" />
-          <InfoBlock label="Address" value="1420 Harbor Avenue, San Diego, CA" />
-          <InfoBlock label="Category" value="Dental clinic" />
-          <InfoBlock label="Website" value="harborcitydental.example" />
-        </div>
-      </div>
     </section>
   );
 }
@@ -322,15 +313,6 @@ function StepCard({ number, step }) {
       <span>{number}</span>
       <h3>{step}</h3>
     </article>
-  );
-}
-
-function InfoBlock({ label, value }) {
-  return (
-    <div className="info-block">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
   );
 }
 
