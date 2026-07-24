@@ -201,9 +201,9 @@ function PublicHome({ onRequest, onAuditComplete }) {
         </div>
       </section>
 
+      <HowItWorks />
       <ProblemSection />
       <WhatWeCheck />
-      <HowItWorks />
       <TrustSection />
       <PilotExample />
       <FinalCTA onRequest={onRequest} />
