@@ -20,7 +20,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
-  const [locationStatus, setLocationStatus] = useState("Location is optional and only used to narrow the business search if you approve it.");
+  const [locationStatus, setLocationStatus] = useState("");
 
   const query = useMemo(() => {
     return [form.businessName.trim(), form.location.trim(), coordinates].filter(Boolean).join(" ");
@@ -218,10 +218,6 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
         </button>
       </div>
 
-      <p className="mt-3 text-sm leading-6 text-slate-700">
-        {hasSelection ? "Confirm the business below to prevent scanning the wrong location." : "StreetSignal first finds possible public listings, then asks you to confirm the correct business before the scan runs."}
-      </p>
-
       {status === "scanning" && <ScanProgress />}
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -229,7 +225,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
           <button
             className="secondary-button min-h-11 px-4 py-2 text-sm"
             type="button"
-            aria-describedby="location-status"
+            aria-describedby={locationStatus ? "location-status" : undefined}
             onClick={useCurrentLocation}
             disabled={busy}
           >
@@ -243,9 +239,9 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
           )}
         </div>
 
-        <div className="min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">
+        {(message || locationStatus) && <div className="min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">
           {message || <span id="location-status">{locationStatus}</span>}
-        </div>
+        </div>}
       </div>
 
       {locationStatus && message && <p id="location-status" className="mt-2 text-xs leading-5 text-slate-600">{locationStatus}</p>}
