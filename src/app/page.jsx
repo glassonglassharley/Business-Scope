@@ -175,6 +175,7 @@ function PublicHome({ onAuditComplete }) {
             {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
           </p>
           <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
+          <BusinessRowVisual />
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
         <div className="hero-form-wrap">
@@ -186,6 +187,35 @@ function PublicHome({ onAuditComplete }) {
       <ProblemSection />
       <TrustSection />
       <SiteFooter />
+    </div>
+  );
+}
+
+function BusinessRowVisual() {
+  const storefronts = [
+    { name: "Cafe", tone: "brand", signal: "Hours mismatch" },
+    { name: "Salon", tone: "amber", signal: "Missing menu" },
+    { name: "Dental", tone: "ink", signal: "Broken booking" },
+    { name: "Fitness", tone: "green", signal: "Photos missing" }
+  ];
+
+  return (
+    <div className="business-row-visual" aria-label="Illustration of local businesses being checked for public listing issues">
+      <div className="business-row-visual__sky" aria-hidden="true" />
+      <div className="business-row-visual__street" aria-hidden="true" />
+      <div className="business-row-visual__stores">
+        {storefronts.map((store) => (
+          <div className={`storefront-card ${store.tone}`} key={store.name}>
+            <div className="storefront-awning" aria-hidden="true" />
+            <div className="storefront-sign">{store.name}</div>
+            <div className="storefront-window-row" aria-hidden="true">
+              <span />
+              <span />
+            </div>
+            <div className="storefront-signal">{store.signal}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

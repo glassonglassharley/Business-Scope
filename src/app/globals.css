@@ -116,6 +116,95 @@ a {
     @apply lg:col-span-2;
   }
 
+  .business-row-visual {
+    @apply relative mt-6 min-h-52 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-white via-nested-surface to-brand/10 p-4 shadow-soft;
+  }
+
+  .business-row-visual__sky {
+    @apply absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-brand/10 to-transparent;
+  }
+
+  .business-row-visual__sky::before,
+  .business-row-visual__sky::after {
+    content: "";
+    @apply absolute rounded-full bg-white/80 shadow-soft;
+  }
+
+  .business-row-visual__sky::before {
+    @apply left-8 top-6 h-6 w-20;
+  }
+
+  .business-row-visual__sky::after {
+    @apply right-12 top-4 h-8 w-28;
+  }
+
+  .business-row-visual__street {
+    @apply absolute inset-x-4 bottom-4 h-9 rounded-full bg-ink/10;
+  }
+
+  .business-row-visual__street::after {
+    content: "";
+    @apply absolute left-1/2 top-1/2 h-1 w-10/12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80;
+  }
+
+  .business-row-visual__stores {
+    @apply relative z-10 grid min-h-44 items-end gap-3 sm:grid-cols-4;
+  }
+
+  .storefront-card {
+    @apply relative overflow-hidden rounded-xl border border-line bg-surface p-3 pt-9 shadow-soft;
+  }
+
+  .storefront-card::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-8 bg-brand/15;
+  }
+
+  .storefront-card.amber::before {
+    @apply bg-signal-amber/25;
+  }
+
+  .storefront-card.ink::before {
+    @apply bg-ink/15;
+  }
+
+  .storefront-card.green::before {
+    @apply bg-signal-green/20;
+  }
+
+  .storefront-awning {
+    @apply absolute inset-x-0 top-6 h-4 border-y border-line bg-white/80;
+    background-image: repeating-linear-gradient(90deg, rgba(214, 56, 27, 0.18) 0 16px, rgba(255, 255, 255, 0.86) 16px 32px);
+  }
+
+  .storefront-card.amber .storefront-awning {
+    background-image: repeating-linear-gradient(90deg, rgba(217, 141, 30, 0.22) 0 16px, rgba(255, 255, 255, 0.88) 16px 32px);
+  }
+
+  .storefront-card.ink .storefront-awning {
+    background-image: repeating-linear-gradient(90deg, rgba(15, 23, 42, 0.18) 0 16px, rgba(255, 255, 255, 0.9) 16px 32px);
+  }
+
+  .storefront-card.green .storefront-awning {
+    background-image: repeating-linear-gradient(90deg, rgba(32, 122, 84, 0.2) 0 16px, rgba(255, 255, 255, 0.9) 16px 32px);
+  }
+
+  .storefront-sign {
+    @apply relative z-10 text-sm font-black uppercase tracking-[0.12em] text-ink;
+  }
+
+  .storefront-window-row {
+    @apply mt-3 grid grid-cols-2 gap-2;
+  }
+
+  .storefront-window-row span {
+    @apply h-12 rounded-lg border border-line bg-gradient-to-br from-brand/10 to-white;
+  }
+
+  .storefront-signal {
+    @apply mt-3 rounded-lg border border-signal-red/30 bg-signal-red/10 px-3 py-2 text-xs font-black text-ink;
+  }
+
   .diagnostic-preview {
     @apply min-w-0 rounded-2xl border border-line bg-nested-surface p-5 shadow-soft;
   }
