@@ -136,6 +136,20 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
         </div>
       </section>
 
+      <section className="print-break-inside border-b border-line bg-nested-surface p-5 sm:p-7">
+        <div className="grid gap-5 rounded-xl border border-line bg-surface p-5 shadow-soft md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <h3 className="text-2xl font-black text-ink">Want us to fix these issues?</h3>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
+              We can prepare a clearly scoped cleanup plan. No changes are made without your approval.
+            </p>
+          </div>
+          <a className="primary-button w-full md:w-auto" href="mailto:hello@streetsignal.com?subject=Request%20cleanup%20plan">
+            Request cleanup plan
+          </a>
+        </div>
+      </section>
+
       <footer className="p-5 text-sm text-slate-700 sm:p-7">
         <p className="font-black text-ink">Prepared by {reportPreparer}</p>
         <p className="mt-1">A few focused improvements can turn more local searches into calls, orders, quote requests, and booked jobs.</p>
