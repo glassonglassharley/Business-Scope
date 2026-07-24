@@ -1,14 +1,15 @@
 {
-  "ink": "#0E1626",
-  "paper": "#EFE7D8",
+  "ink": "#1C1917",
+  "paper": "#F7F4EF",
   "surface": "#FFFFFF",
-  "nestedSurface": "#FAF6EE",
-  "searchSurface": "#FFF4DE",
-  "searchLine": "#E7C27A",
-  "line": "#E2D8C5",
-  "brand": "#D5401C",
-  "brandSoft": "#F0997B",
-  "signalGreen": "#639922",
-  "signalAmber": "#EF9F27",
-  "signalRed": "#E24B4A"
+  "nestedSurface": "#FFF7ED",
+  "searchSurface": "#FFF7ED",
+  "searchLine": "#E7E5E4",
+  "line": "#E7E5E4",
+  "brand": "#C2410C",
+  "brandHover": "#9A3412",
+  "brandSoft": "#FFF7ED",
+  "signalGreen": "#4D7C5A",
+  "signalAmber": "#D97706",
+  "signalRed": "#DC2626"
 }

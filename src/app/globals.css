@@ -67,7 +67,7 @@ a {
   }
 
   .primary-button {
-    @apply inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 py-3 text-sm font-black text-white transition hover:bg-brand/90 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-60;
+    @apply inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 py-3 text-sm font-black text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-60;
   }
 
   .secondary-button {
@@ -127,8 +127,8 @@ a {
 
   .report-score {
     @apply border-4 border-brand-soft bg-brand text-white ring-2 ring-white/20;
-    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 18px 38px rgba(213, 64, 28, 0.42);
-    text-shadow: 0 2px 0 rgba(14, 22, 38, 0.35);
+    box-shadow: 0 0 0 6px rgba(255, 247, 237, 0.18), 0 18px 38px rgba(194, 65, 12, 0.34);
+    text-shadow: 0 2px 0 rgba(28, 25, 23, 0.35);
   }
 
   .signal-row {
