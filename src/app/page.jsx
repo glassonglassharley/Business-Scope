@@ -175,11 +175,9 @@ function PublicHome({ onAuditComplete }) {
             {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
           </p>
           <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
+          <BusinessSearch onAuditComplete={onAuditComplete} variant="compact" />
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
-        <div className="hero-form-wrap">
-          <BusinessSearch onAuditComplete={onAuditComplete} />
-        </div>
       </section>
 
       <HowItWorks />

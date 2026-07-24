@@ -112,10 +112,6 @@ a {
     @apply mt-5 max-w-3xl text-lg leading-8 text-slate-700;
   }
 
-  .hero-form-wrap {
-    @apply lg:col-span-2;
-  }
-
   .diagnostic-preview {
     @apply min-w-0 rounded-2xl border border-line bg-nested-surface p-5 shadow-soft;
   }
@@ -436,6 +432,10 @@ a {
   .diagnostic-form::before {
     content: "";
     @apply absolute inset-x-0 top-0 h-1 bg-brand;
+  }
+
+  .diagnostic-form.compact {
+    @apply mt-5 border-brand/60 bg-search-surface/90 shadow-soft;
   }
 
   .field-label {

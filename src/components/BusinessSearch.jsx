@@ -182,7 +182,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
 
   return (
     <form id="business-search" className={variant === "compact" ? "diagnostic-form compact" : "diagnostic-form"} onSubmit={handleSubmit} noValidate>
-      <div className="grid gap-3 lg:grid-cols-[1.05fr_0.85fr_auto] lg:items-end">
+      <div className={variant === "compact" ? "grid gap-3 md:grid-cols-2" : "grid gap-3 lg:grid-cols-[1.05fr_0.85fr_auto] lg:items-end"}>
         <label className="field-label" htmlFor="business-search-business">
           Business name
           <input
@@ -213,7 +213,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
           {errors.location && <span id="business-location-error" className="form-error">{errors.location}</span>}
         </label>
 
-        <button className="primary-button min-h-12 w-full whitespace-nowrap lg:w-auto" type="submit" disabled={busy} aria-busy={busy}>
+        <button className={variant === "compact" ? "primary-button min-h-12 w-full whitespace-nowrap md:col-span-2" : "primary-button min-h-12 w-full whitespace-nowrap lg:w-auto"} type="submit" disabled={busy} aria-busy={busy}>
           {buttonLabel(status, hasSelection)}
         </button>
       </div>
