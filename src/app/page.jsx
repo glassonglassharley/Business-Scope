@@ -205,7 +205,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
       <ProblemSection />
       <WhatWeCheck />
       <TrustSection />
-      <PilotExample />
       <FinalCTA onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -327,42 +326,6 @@ function TrustSection() {
         {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
       </div>
     </section>
-  );
-}
-
-function PilotExample() {
-  return (
-    <section className="panel-section">
-      <div className="section-heading">
-        <p className="eyebrow">Proof structure</p>
-        <h2>Pilot Example</h2>
-        <p>This is clearly labeled as an example until verified client data is available.</p>
-      </div>
-      <CaseStudy title="Local restaurant presence cleanup" found={["Conflicting weekend hours", "An outdated menu link", "An unanswered ordering question"]} resolved={["Business details aligned", "Menu destination replaced", "Customer question answered"]} />
-    </section>
-  );
-}
-
-function CaseStudy({ title, found, resolved }) {
-  return (
-    <article className="case-study">
-      <h3>{title}</h3>
-      <div className="grid gap-4 md:grid-cols-2">
-        <CaseList title="Found" items={found} tone="red" />
-        <CaseList title="Resolved" items={resolved} tone="green" />
-      </div>
-    </article>
-  );
-}
-
-function CaseList({ title, items, tone }) {
-  return (
-    <div>
-      <h4>{title}</h4>
-      <ul>
-        {items.map((item) => <li key={item}><span className={`severity-dot ${tone}`} aria-hidden="true" />{item}</li>)}
-      </ul>
-    </div>
   );
 }
 
