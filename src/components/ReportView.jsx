@@ -9,12 +9,16 @@ import { BRAND } from "@/lib/brand";
 export function ReportView({ audit, preparerName, sharedMode = false }) {
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
   const [summaryStatus, setSummaryStatus] = useState("Copy report summary");
+  const [fullReportUnlocked, setFullReportUnlocked] = useState(Boolean(audit.fullReportUnlocked));
   const band = bandForScore(audit.score.total);
   const reportPreparer = preparerName || BRAND;
   const categoryLabels = getScoringCategories(audit);
   const isFoodBusiness = audit.industry === "Restaurant / Food Service";
   const healthScore = audit.score?.breakdown || audit.businessHealthScore;
   const isPlacesBreakdown = Boolean(audit.score?.breakdown?.availableWeight !== undefined);
+  const executiveIssues = isPlacesBreakdown
+    ? audit.score.breakdown.prioritizedIssues.filter((issue) => fullReportUnlocked || isFreePlacesIssue(issue)).slice(0, 2)
+    : [];
   const lowestCategories = isPlacesBreakdown ? [] : [...audit.score.categories].sort((a, b) => a.points / a.max - b.points / b.max).slice(0, 2);
   const weakestMeasuredPlaceCategory = isPlacesBreakdown
     ? audit.score.breakdown.categories.filter((category) => category.status === "measured").sort((a, b) => a.score - b.score)[0]
@@ -79,7 +83,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {isPlacesBreakdown
-              ? audit.score.breakdown.prioritizedIssues.slice(0, 2).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)
+              ? executiveIssues.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)
               : lowestCategories.map((category) => (
                   <PriorityBox key={category.key} label={categoryLabels[category.key].label} category={category} />
                 ))}
@@ -96,7 +100,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
         </section>
       )}
 
-      {healthScore && <BusinessHealthSection healthScore={healthScore} />}
+      {healthScore && <BusinessHealthSection healthScore={healthScore} fullReportUnlocked={fullReportUnlocked} onUnlock={() => setFullReportUnlocked(true)} />}
 
       <section className="print-break-inside border-b border-line p-5 sm:p-7">
         <h3 className="text-2xl font-black text-ink">Top Gaps Costing Customers</h3>
@@ -158,16 +162,67 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
   );
 }
 
-function PlacesHealthSection({ breakdown }) {
-  const [checkView, setCheckView] = useState("issues");
+const PAID_PLACES_CATEGORY_KEYS = new Set(["contentFreshness", "aiVisibility"]);
+const FREE_ONLINE_PRESENCE_METRIC_IDS = new Set(["websitePhone", "websiteAddress"]);
+const PAID_ONLINE_PRESENCE_METRIC_IDS = new Set(["yelpPresence", "yelpName", "yelpAddress", "yelpPhone", "bing", "apple", "facebook"]);
+
+function isFreePlacesIssue(issue) {
+  if (!issue?.id) return true;
+  if (issue.id.startsWith("contentFreshness-") || issue.id.startsWith("aiVisibility-")) return false;
+  if (!issue.id.startsWith("onlinePresence-")) return true;
+  const metricId = issue.id.replace("onlinePresence-", "");
+  return !PAID_ONLINE_PRESENCE_METRIC_IDS.has(metricId);
+}
+
+function toFreePlacesCategory(category) {
+  if (PAID_PLACES_CATEGORY_KEYS.has(category.key)) return null;
+  if (category.key !== "onlinePresence") return category;
+  const metrics = category.metrics.filter((metric) => FREE_ONLINE_PRESENCE_METRIC_IDS.has(metric.id));
+  return metrics.length ? { ...category, metrics } : null;
+}
+
+function isPaidLegacyCategory(category) {
+  const key = category.key?.toLowerCase?.() || "";
+  const label = category.label?.toLowerCase?.() || "";
+  return key.includes("freshness") || key.includes("ai") || label.includes("content freshness") || label.includes("ai visibility");
+}
+
+function isPaidLegacyIssue(issue) {
+  const combined = `${issue.id || ""} ${issue.category || ""} ${issue.title || ""}`.toLowerCase();
+  return combined.includes("freshness") || combined.includes("ai visibility") || combined.includes("yelp") || combined.includes("bing") || combined.includes("apple maps") || combined.includes("facebook");
+}
+
+function LockedReportSection({ onUnlock, compact = false, className = "" }) {
+  return (
+    <div className={`rounded-xl border border-brand/30 bg-brand-soft p-4 shadow-soft ${className}`}>
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div>
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-brand">Locked full scan</div>
+          <h4 className={`${compact ? "mt-1 text-lg" : "mt-2 text-2xl"} font-black text-ink`}>Unlock the full scan</h4>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
+            Get secondary listings, content freshness, and the complete cross-source action plan.
+          </p>
+        </div>
+        <button type="button" className="primary-button w-full sm:w-auto" onClick={onUnlock}>
+          Unlock Full Report — $19
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PlacesHealthSection({ breakdown, fullReportUnlocked, onUnlock }) {
+  const [checkView, setCheckView] = useState("all");
   const showAllChecks = checkView === "all";
+  const visibleCategories = fullReportUnlocked ? breakdown.categories : breakdown.categories.map(toFreePlacesCategory).filter(Boolean);
   const issueMetricIds = useMemo(
-    () => new Set((breakdown.prioritizedIssues || []).map((issue) => issue.id)),
-    [breakdown.prioritizedIssues]
+    () => new Set((breakdown.prioritizedIssues || []).filter((issue) => fullReportUnlocked || isFreePlacesIssue(issue)).map((issue) => issue.id)),
+    [breakdown.prioritizedIssues, fullReportUnlocked]
   );
   const displayedCategories = showAllChecks
-    ? breakdown.categories
-    : breakdown.categories.filter((category) => category.metrics.some((metric) => issueMetricIds.has(`${category.key}-${metric.id}`)));
+    ? visibleCategories
+    : visibleCategories.filter((category) => category.metrics.some((metric) => issueMetricIds.has(`${category.key}-${metric.id}`)));
+  const visiblePrioritizedIssues = (breakdown.prioritizedIssues || []).filter((issue) => fullReportUnlocked || isFreePlacesIssue(issue));
 
   return (
     <section className="print-break-inside border-b border-line p-5 sm:p-7">
@@ -220,14 +275,20 @@ function PlacesHealthSection({ breakdown }) {
             No issue checks were found in the detailed scan. Use “Show all checks” to review every available and unavailable check.
           </div>
         )}
+        {!fullReportUnlocked && <LockedReportSection onUnlock={onUnlock} className="lg:col-span-2" />}
       </div>
 
-      {breakdown.prioritizedIssues?.length > 0 && (
+      {visiblePrioritizedIssues.length > 0 && (
         <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">Prioritized next fixes</h4>
+          <h4 className="font-black text-ink">{fullReportUnlocked ? "Prioritized next fixes" : "Free prioritized next fixes"}</h4>
           <div className="mt-3 grid gap-3">
-            {breakdown.prioritizedIssues.slice(0, 5).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
+            {visiblePrioritizedIssues.slice(0, 5).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
           </div>
+          {!fullReportUnlocked && (
+            <div className="mt-4 border-t border-line pt-4">
+              <LockedReportSection onUnlock={onUnlock} compact />
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -305,8 +366,11 @@ function PriorityIssueBox({ issue }) {
     </div>
   );
 }
-function BusinessHealthSection({ healthScore }) {
-  if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} />;
+function BusinessHealthSection({ healthScore, fullReportUnlocked, onUnlock }) {
+  if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} fullReportUnlocked={fullReportUnlocked} onUnlock={onUnlock} />;
+
+  const visibleCategories = fullReportUnlocked ? healthScore.categories : healthScore.categories.filter((category) => !isPaidLegacyCategory(category));
+  const freeIssues = (healthScore.prioritizedIssues || []).filter((issue) => fullReportUnlocked || !isPaidLegacyIssue(issue));
 
   return (
     <section className="print-break-inside border-b border-line p-5 sm:p-7">
@@ -334,14 +398,15 @@ function BusinessHealthSection({ healthScore }) {
       )}
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {healthScore.categories.map((category) => <HealthCategoryCard key={category.key} category={category} />)}
+        {visibleCategories.map((category) => <HealthCategoryCard key={category.key} category={category} />)}
+        {!fullReportUnlocked && <LockedReportSection onUnlock={onUnlock} className="lg:col-span-2" />}
       </div>
 
-      {healthScore.prioritizedIssues?.length > 0 && (
+      {freeIssues.length > 0 && (
         <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">Prioritized next fixes</h4>
+          <h4 className="font-black text-ink">{fullReportUnlocked ? "Prioritized next fixes" : "Free prioritized next fixes"}</h4>
           <div className="mt-3 grid gap-3">
-            {healthScore.prioritizedIssues.slice(0, 5).map((issue) => (
+            {freeIssues.slice(0, 5).map((issue) => (
               <div key={issue.id} className="grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0 md:grid-cols-[1fr_auto]">
                 <div>
                   <p className="font-black text-ink">{issue.title}</p>
@@ -355,6 +420,11 @@ function BusinessHealthSection({ healthScore }) {
               </div>
             ))}
           </div>
+          {!fullReportUnlocked && (
+            <div className="mt-4 border-t border-line pt-4">
+              <LockedReportSection onUnlock={onUnlock} compact />
+            </div>
+          )}
         </div>
       )}
     </section>
