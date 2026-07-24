@@ -19,9 +19,24 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     campaign: { type: "string" },
-    limit: { type: "string" }
+    limit: { type: "string" },
+    "include-incomplete": { type: "boolean" }
   }
 });
+
+/**
+ * Refuse to rank/export a campaign flagged incomplete (discovery or deep scan
+ * hit the request ceiling), unless --include-incomplete is passed. Partial
+ * data must not be presented as a clean ranked list.
+ */
+async function assertComplete(db, name) {
+  const r = await db.query("select incomplete from campaigns where name = $1", [name]);
+  if (r.rows[0]?.incomplete && !values["include-incomplete"]) {
+    console.error(`Campaign "${name}" is INCOMPLETE — its discovery or deep scan hit the request ceiling, so only part of the area/shortlist was covered. Refusing to present partial data as clean.`);
+    console.error(`Complete the sweep first, or pass --include-incomplete to override.`);
+    process.exit(2);
+  }
+}
 
 const command = positionals[0];
 
@@ -166,6 +181,7 @@ async function rank() {
   if (!values.campaign) throw new Error("--campaign is required.");
   const { getDb } = await import("../src/lib/db.mjs");
   const db = getDb();
+  await assertComplete(db, values.campaign);
   const limit = Number(values.limit || 20);
 
   const result = await db.query(

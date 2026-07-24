@@ -17,7 +17,7 @@ loadEnvLocal();
 const { GooglePlacesProvider } = await import("../src/lib/prospectData.js");
 const { WebsiteProvider } = await import("../src/lib/websiteProvider.js");
 const { calculateBusinessHealthScore } = await import("../src/lib/scoring.js");
-const { getDb } = await import("../src/lib/db.mjs");
+const { getDb, refreshCampaignCompleteness } = await import("../src/lib/db.mjs");
 const { sleep } = await import("../src/lib/placesHttp.mjs");
 const { discoveryConfig, estimateCostUsd } = await import("../src/lib/prospectingConfig.mjs");
 
@@ -192,5 +192,12 @@ async function finishRun(status, error = null) {
   await db.query(
     "update runs set request_counts = $2, stats = $3, status = $4, error = $5, finished_at = now() where id = $1",
     [runId, JSON.stringify(requestCounts), JSON.stringify(stats), status, error]
+  );
+  // A deep scan that aborts at the ceiling leaves the shortlist partly
+  // scanned — mark the campaign incomplete so its list is not treated as clean.
+  // A silently-failed refresh would leave that partial campaign looking clean,
+  // so log loudly instead of swallowing.
+  await refreshCampaignCompleteness(db, campaignId).catch((err) =>
+    console.error(`WARNING: could not update the campaign incomplete flag; this partly-scanned campaign may look clean until re-run or backfilled: ${err.message}`)
   );
 }

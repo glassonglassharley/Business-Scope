@@ -220,7 +220,11 @@ export const categoryCatalog = [
   { slug: "electrical", label: "Electrical", type: "electrician", fit: "strong", default: true },
   { slug: "landscaping", label: "Landscaping", keyword: "landscaping", fit: "strong", default: true },
   { slug: "painting", label: "Painting", type: "painter", fit: "strong", default: true },
-  { slug: "general-contractor", label: "General contracting", type: "general_contractor", fit: "strong", default: true, note: "Broad; overlaps roofing/painting/etc. heavily." },
+  // Excluded from the default sweep: too broad at metro scale (3600+ listings
+  // in an 8km SD radius — overflows the request ceiling and truncates), and it
+  // overlaps roofing/painting/etc. anyway. Sweep it explicitly with a
+  // completion strategy if ever needed.
+  { slug: "general-contractor", label: "General contracting", type: "general_contractor", fit: "strong", default: false, note: "Mega-category; overflows the ceiling at 8km and overlaps other trades." },
   { slug: "locksmith", label: "Locksmith", type: "locksmith", fit: "mixed", default: true, note: "Category is polluted by national lead-gen/scam listings; expect noise." },
   { slug: "pest-control", label: "Pest control", keyword: "pest control", fit: "strong", default: true },
   { slug: "moving", label: "Moving", type: "moving_company", fit: "mixed", default: true, note: "Brokers and national franchises common; chain pre-filter helps." },

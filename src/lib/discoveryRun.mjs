@@ -12,7 +12,7 @@
 // just this run's finds, so an aborted run leaves no business stranded in an
 // assumed state — the next run heals it.
 
-import { getDb } from "./db.mjs";
+import { getDb, refreshCampaignCompleteness } from "./db.mjs";
 import { planTiles } from "./discoveryGrid.mjs";
 import { fetchContactDetails, geocodeZip, nearbySearchPage } from "./placesDiscovery.mjs";
 import { sleep } from "./placesHttp.mjs";
@@ -141,12 +141,14 @@ export async function runDiscovery({ campaignName, resumeRunId, maxRequests }) {
       .map(([key]) => key);
     state.stats.estimatedCostUsd = estimateCostUsd(state.requestCounts);
     await persistRun(db, state, { status: "completed" });
+    await refreshCampaignCompleteness(db, campaign.id).catch(warnRefreshFailed);
     return { runId: state.runId, requestCounts: state.requestCounts, stats: state.stats };
   } catch (error) {
     // Hard requirement: counts get logged even when the run errors partway.
     state.stats.topNames = topNames(nameCounts);
     state.stats.estimatedCostUsd = estimateCostUsd(state.requestCounts);
     await persistRun(db, state, { status: "failed", error: error.message }).catch(() => {});
+    await refreshCampaignCompleteness(db, campaign.id).catch(warnRefreshFailed);
     if (error instanceof RunAborted) {
       return { runId: state.runId, aborted: error.message, requestCounts: state.requestCounts, stats: state.stats };
     }
@@ -433,4 +435,10 @@ async function persistRun(db, state, { status, error } = {}) {
 
 function normalizeName(name) {
   return String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// A silently-failed refresh would leave a partial campaign looking clean — the
+// exact failure this flag exists to prevent — so make it loud.
+function warnRefreshFailed(error) {
+  console.error(`WARNING: could not update the campaign incomplete flag; a partial campaign may look clean until it is re-run or backfilled: ${error.message}`);
 }

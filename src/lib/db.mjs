@@ -36,3 +36,27 @@ export function getDb() {
 export function query(text, params) {
   return getDb().query(text, params);
 }
+
+/**
+ * Recompute campaigns.incomplete from run history: true when the most recent
+ * FINISHED discovery run, or the most recent finished deep-scan run, ended at
+ * the request ceiling. Self-healing — a later full run that finishes under the
+ * ceiling flips it back to false. Called at the end of every discovery and
+ * deep-scan run so the flag always reflects the latest coverage.
+ * @param {import("pg").Pool} db
+ * @param {string} campaignId
+ */
+export function refreshCampaignCompleteness(db, campaignId) {
+  return db.query(
+    `update campaigns c set incomplete = exists (
+       select 1 from runs r
+       where r.campaign_id = c.id and r.kind in ('discovery', 'deep_scan')
+         and r.error = 'max_requests_ceiling'
+         and r.finished_at = (
+           select max(r2.finished_at) from runs r2
+           where r2.campaign_id = c.id and r2.kind = r.kind and r2.finished_at is not null
+         )
+     ) where c.id = $1`,
+    [campaignId]
+  );
+}

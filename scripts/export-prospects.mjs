@@ -18,19 +18,24 @@ import { prospectScoringConfig } from "../src/lib/prospectingConfig.mjs";
 loadEnvLocal();
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { values } = parseArgs({ options: { campaign: { type: "string" }, out: { type: "string" } } });
+const { values } = parseArgs({ options: { campaign: { type: "string" }, out: { type: "string" }, "include-incomplete": { type: "boolean" } } });
 if (!values.campaign) {
-  console.error("Usage: export-prospects.mjs --campaign <name> [--out path.csv]");
+  console.error("Usage: export-prospects.mjs --campaign <name> [--out path.csv] [--include-incomplete]");
   process.exit(1);
 }
 
 const { getDb } = await import("../src/lib/db.mjs");
 const db = getDb();
 
-const campaign = await db.query("select id from campaigns where name = $1", [values.campaign]);
+const campaign = await db.query("select id, incomplete from campaigns where name = $1", [values.campaign]);
 if (!campaign.rows.length) {
   console.error(`No campaign named "${values.campaign}".`);
   process.exit(1);
+}
+// Refuse to turn partial data into a call sheet.
+if (campaign.rows[0].incomplete && !values["include-incomplete"]) {
+  console.error(`Campaign "${values.campaign}" is INCOMPLETE — discovery or deep scan hit the request ceiling, so only part of it was covered. Refusing to export partial data as a call sheet. Complete the sweep, or pass --include-incomplete to override.`);
+  process.exit(2);
 }
 const campaignId = campaign.rows[0].id;
 
