@@ -136,7 +136,7 @@ export default function Home() {
       </header>
 
       <div id="report-top" className="mx-auto max-w-7xl px-4 py-5 sm:px-5 sm:py-6">
-        {view === "splash" && <PublicHome onRequest={() => document.getElementById("business-search")?.scrollIntoView({ block: "start" })} onAuditComplete={handleCreateAudit} />}
+        {view === "splash" && <PublicHome onAuditComplete={handleCreateAudit} />}
         {view === "request" && <VisibilitySnapshotRequest />}
 
         {ownerMode && view === "dashboard" && (
@@ -162,7 +162,7 @@ export default function Home() {
   );
 }
 
-function PublicHome({ onRequest, onAuditComplete }) {
+function PublicHome({ onAuditComplete }) {
   const checkedDate = useMemo(() => new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date()), []);
 
   return (
@@ -185,7 +185,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
       <HowItWorks />
       <ProblemSection />
       <TrustSection />
-      <FinalCTA onRequest={onRequest} />
       <SiteFooter />
     </div>
   );
@@ -285,16 +284,6 @@ function TrustSection() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
       </div>
-    </section>
-  );
-}
-
-function FinalCTA({ onRequest }) {
-  return (
-    <section className="final-cta">
-      <h2>See what customers see before they choose your business.</h2>
-      <button className="primary-button" type="button" onClick={onRequest}>Run my free checkup</button>
-      <p>No account or listing access required.</p>
     </section>
   );
 }
