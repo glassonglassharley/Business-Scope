@@ -125,6 +125,12 @@ a {
     @apply flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-signal-amber bg-signal-amber/10 text-4xl font-black text-ink;
   }
 
+  .report-score {
+    @apply border-4 border-brand-soft bg-brand text-white ring-2 ring-white/20;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 18px 38px rgba(213, 64, 28, 0.42);
+    text-shadow: 0 2px 0 rgba(14, 22, 38, 0.35);
+  }
+
   .signal-row {
     @apply flex gap-3 rounded-xl border border-line bg-surface p-3;
   }
