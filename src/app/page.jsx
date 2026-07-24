@@ -285,7 +285,6 @@ function TrustSection() {
     <section className="trust-section">
       <div className="section-heading">
         <p className="eyebrow">Trust boundary</p>
-        <h2>StreetSignal checks public-facing information. It does not need your passwords.</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
