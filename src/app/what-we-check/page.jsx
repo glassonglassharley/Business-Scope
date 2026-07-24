@@ -17,9 +17,7 @@ export default function WhatWeCheckPage() {
   return (
     <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
       <div className="mx-auto grid max-w-7xl gap-5">
-        <div className="rounded-2xl border border-line bg-surface p-5 shadow-soft sm:p-8">
-          <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
-        </div>
+        <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
         <WhatWeCheck />
       </div>
     </main>
