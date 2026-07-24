@@ -196,6 +196,44 @@ a {
     @apply mt-2 text-sm leading-6 text-slate-700;
   }
 
+  .problem-picture {
+    @apply relative mb-4 flex h-28 items-center justify-center overflow-hidden rounded-lg border border-line bg-surface;
+  }
+
+  .problem-picture::before {
+    content: "";
+    @apply absolute inset-0 bg-brand/10;
+  }
+
+  .problem-picture::after {
+    content: "";
+    @apply absolute -right-6 -top-8 h-24 w-24 rounded-full bg-brand/10;
+  }
+
+  .problem-picture span {
+    @apply relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-line bg-surface text-4xl shadow-soft;
+  }
+
+  .problem-picture span::before {
+    @apply leading-none;
+  }
+
+  .problem-picture.clock span::before {
+    content: "◷";
+  }
+
+  .problem-picture.link span::before {
+    content: "↗";
+  }
+
+  .problem-picture.services span::before {
+    content: "▦";
+  }
+
+  .problem-picture.contact span::before {
+    content: "☎";
+  }
+
   .severity-pill {
     @apply inline-flex min-h-7 items-center rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em];
   }

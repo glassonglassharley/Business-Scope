@@ -21,10 +21,10 @@ const defaultSettings = {
 };
 
 const problemCards = [
-  { title: "Conflicting business hours", body: "Conflicting hours can cause customers to arrive when the business is closed.", status: "High" },
-  { title: "Broken booking or ordering links", body: "A broken booking link can stop an interested customer at the final step.", status: "Critical" },
-  { title: "Missing services or categories", body: "Missing services can keep the business from appearing for the searches customers actually use.", status: "Medium" },
-  { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High" }
+  { title: "Conflicting business hours", body: "Conflicting hours can cause customers to arrive when the business is closed.", status: "High", picture: "clock" },
+  { title: "Broken booking or ordering links", body: "A broken booking link can stop an interested customer at the final step.", status: "Critical", picture: "link" },
+  { title: "Missing services or categories", body: "Missing services can keep the business from appearing for the searches customers actually use.", status: "Medium", picture: "services" },
+  { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High", picture: "contact" }
 ];
 
 const howItWorks = [
@@ -244,9 +244,12 @@ function ProblemSection() {
   );
 }
 
-function ProblemCard({ title, body, status }) {
+function ProblemCard({ title, body, status, picture }) {
   return (
     <article className="panel-card">
+      <div className={`problem-picture ${picture}`} aria-hidden="true">
+        <span />
+      </div>
       <span className={`severity-pill ${status.toLowerCase()}`}>{status}</span>
       <h3>{title}</h3>
       <p>{body}</p>
