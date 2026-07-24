@@ -43,6 +43,59 @@ const trustPoints = [
   "No fabricated revenue-loss claims"
 ];
 
+const previewExamples = [
+  {
+    score: 91,
+    scoreTone: "good",
+    signals: [
+      { label: "Booking link", status: "Low", body: "Mobile booking completed cleanly." },
+      { label: "Hours", status: "Low", body: "Website and listing hours match." },
+      { label: "Reviews", status: "Low", body: "Recent replies and strong rating found." }
+    ],
+    fixFirst: "Keep the review response cadence active so the strong trust signal stays current."
+  },
+  {
+    score: 68,
+    scoreTone: "middle",
+    signals: [
+      { label: "Booking link", status: "Critical", body: "Error returned on mobile." },
+      { label: "Hours", status: "High", body: "Saturday mismatch found." },
+      { label: "Services", status: "Medium", body: "Two core services missing." }
+    ],
+    fixFirst: "Repair the booking link because it directly blocks customer action."
+  },
+  {
+    score: 43,
+    scoreTone: "bad",
+    signals: [
+      { label: "Phone number", status: "Critical", body: "Listing and website numbers conflict." },
+      { label: "Website", status: "High", body: "Contact page fails to load." },
+      { label: "Photos", status: "Medium", body: "No recent proof found." }
+    ],
+    fixFirst: "Correct the phone number everywhere before customers call the wrong line."
+  },
+  {
+    score: 76,
+    scoreTone: "middle",
+    signals: [
+      { label: "Menu", status: "Medium", body: "Prices differ from the website." },
+      { label: "Photos", status: "Low", body: "Recent location photos found." },
+      { label: "Profile", status: "Medium", body: "One primary service is missing." }
+    ],
+    fixFirst: "Align the menu prices across public surfaces so customers do not hesitate."
+  },
+  {
+    score: 27,
+    scoreTone: "bad",
+    signals: [
+      { label: "Hours", status: "Critical", body: "Open-now status conflicts with website." },
+      { label: "Address", status: "High", body: "Old suite number still appears." },
+      { label: "Reviews", status: "High", body: "Low recent volume weakens trust." }
+    ],
+    fixFirst: "Fix hours and address first so customers can safely decide when and where to visit."
+  }
+];
+
 export default function Home() {
   const [audits, setAudits] = useState([]);
   const [selectedAuditId, setSelectedAuditId] = useState(null);
@@ -190,6 +243,12 @@ function PublicHome({ onAuditComplete }) {
 }
 
 function DiagnosticPreview({ checkedDate }) {
+  const [preview, setPreview] = useState(previewExamples[0]);
+
+  useEffect(() => {
+    queueMicrotask(() => setPreview(selectPreviewExample()));
+  }, []);
+
   return (
     <aside className="diagnostic-preview" aria-label="Compact diagnostic result preview">
       <div className="flex items-start justify-between gap-4">
@@ -197,19 +256,26 @@ function DiagnosticPreview({ checkedDate }) {
           <p className="eyebrow">Diagnostic preview</p>
           <h2 className="mt-2 text-xl font-black text-ink">Public presence signal</h2>
         </div>
-        <div className="score-orb" aria-label="Sample score 68 out of 100">68</div>
+        <div className={`score-orb ${preview.scoreTone}`} aria-label={`Sample score ${preview.score} out of 100`}>{preview.score}</div>
       </div>
       <div className="mt-5 grid gap-3">
-        <SignalRow label="Booking link" status="Critical" body="Error returned on mobile." />
-        <SignalRow label="Hours" status="High" body="Saturday mismatch found." />
-        <SignalRow label="Services" status="Medium" body="Two core services missing." />
+        {preview.signals.map((signal) => <SignalRow key={`${preview.score}-${signal.label}`} {...signal} />)}
       </div>
       <div className="mt-5 rounded-xl border border-line bg-nested-surface p-4 text-sm leading-6 text-slate-700">
-        <strong className="text-ink">Fix First:</strong> Repair the booking link because it directly blocks customer action.
+        <strong className="text-ink">Fix First:</strong> {preview.fixFirst}
       </div>
       <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Sample checked: {checkedDate}</p>
     </aside>
   );
+}
+
+function selectPreviewExample() {
+  const storageKey = "streetSignal.previewExampleIndex.v1";
+  const lastIndex = Number(window.sessionStorage.getItem(storageKey));
+  const availableIndexes = previewExamples.map((_, index) => index).filter((index) => index !== lastIndex);
+  const nextIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)] ?? 0;
+  window.sessionStorage.setItem(storageKey, String(nextIndex));
+  return previewExamples[nextIndex];
 }
 
 function SignalRow({ label, status, body }) {
