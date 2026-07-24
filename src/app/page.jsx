@@ -153,6 +153,7 @@ export default function Home() {
   const navItems = [
     ["How It Works", "#how-it-works"],
     ["Sample Report", "/sample-report"],
+    ["Cleanup", "/cleanup"],
     ["What We Check", "/what-we-check"],
     ["FAQ", "/faq"],
     ["Run a Checkup", "#business-search"]
@@ -427,6 +428,7 @@ function SiteFooter() {
       </div>
       <nav className="flex flex-wrap gap-4 font-bold" aria-label="Footer navigation">
         <Link className="link" href="/sample-report">Sample Report</Link>
+        <Link className="link" href="/cleanup">Cleanup</Link>
         <Link className="link" href="/privacy">Privacy</Link>
         <Link className="link" href="/faq">FAQ</Link>
         <Link className="link" href="/terms">Terms</Link>
