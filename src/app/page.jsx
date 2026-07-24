@@ -174,10 +174,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
           <p className="hero-subcopy">
             {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
           </p>
-          <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
-            <Link className="primary-button" href="#business-search">Check my business free</Link>
-            <Link className="secondary-button" href="/sample-report">See a sample checkup</Link>
-          </div>
           <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
