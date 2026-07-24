@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AuditDashboard } from "@/components/AuditDashboard";
 import { BusinessSearch } from "@/components/BusinessSearch";
@@ -40,49 +41,6 @@ const checkGroups = [
   }
 ];
 
-const sampleFindings = [
-  {
-    title: "Saturday hours differ across two public listings.",
-    severity: "High",
-    impact: "Customers may arrive after the business has closed.",
-    source: "Google Business Profile + website footer",
-    valueFound: "Google: closes 5:00 PM; website: closes 3:00 PM",
-    expectedValue: "One confirmed Saturday closing time",
-    confidence: "High",
-    action: "Confirm Saturday hours and update every public listing from the same source of truth.",
-    status: "Open"
-  },
-  {
-    title: "The main booking link returns an error.",
-    severity: "Critical",
-    impact: "Mobile visitors cannot complete an appointment.",
-    source: "Website booking button",
-    valueFound: "Booking URL returns an error page",
-    expectedValue: "Working appointment destination",
-    confidence: "High",
-    action: "Repair or replace the booking URL, then test it from a phone.",
-    status: "Open"
-  },
-  {
-    title: "Two primary services are missing from the Google Business Profile.",
-    severity: "Medium",
-    impact: "The business may not appear for relevant searches.",
-    source: "Google Business Profile services",
-    valueFound: "Emergency repairs and weekend appointments not listed",
-    expectedValue: "Core services listed in the profile and website",
-    confidence: "Medium",
-    action: "Add the missing services and align the wording with the website.",
-    status: "Needs verification"
-  }
-];
-
-const categoryScores = [
-  ["Information Accuracy", 82],
-  ["Search Visibility", 67],
-  ["Customer Trust", 71],
-  ["Conversion Paths", 45]
-];
-
 const howItWorks = [
   "Find and confirm your business.",
   "StreetSignal checks the public customer journey.",
@@ -97,19 +55,6 @@ const trustPoints = [
   "Public sources shown with each finding",
   "Clear timestamps",
   "No fabricated revenue-loss claims"
-];
-
-const faqs = [
-  ["What information does StreetSignal need?", "A business name and city or area are needed to find the right public listing. If you request follow-up, the form may also ask for a contact method and any notes you choose to provide."],
-  ["Does StreetSignal need access to my Google account?", "No. The initial checkup reads public-facing information and does not require a Google password or listing access."],
-  ["Is the checkup free?", "The initial checkup is free. If you want help correcting issues, StreetSignal can provide a clearly scoped cleanup plan. Ongoing monitoring can be offered separately."],
-  ["How is the score calculated?", "The score is a diagnostic guide based on public details, trust signals, and customer-action paths StreetSignal can check. Unavailable checks are identified separately and do not automatically lower the score."],
-  ["What sources are checked?", "The current live flow uses public listing data such as Google Places and website checks when available. The sample report shows the broader diagnostic structure StreetSignal is designed around."],
-  ["How long does the checkup take?", "The live form attempts an initial public-presence scan after you confirm the business. If a source is unavailable, StreetSignal shows a partial or failed state instead of pretending the scan completed."],
-  ["Can StreetSignal fix the issues?", "Yes, cleanup help can be scoped after the initial checkup. StreetSignal does not make listing or website changes without approval."],
-  ["Will I receive a sales call?", "The initial scan does not require an account. If you submit contact information for follow-up, StreetSignal may use it to respond about the checkup or cleanup request."],
-  ["What types of businesses can be checked?", "StreetSignal is best suited for local businesses customers contact, visit, book, or order from, including service businesses, restaurants, shops, clinics, and appointment-based businesses."],
-  ["What happens if StreetSignal finds multiple business locations?", "You must choose and confirm the correct listing before the checkup runs. This prevents scanning the wrong location." ]
 ];
 
 export default function Home() {
@@ -168,9 +113,9 @@ export default function Home() {
 
   const navItems = [
     ["How It Works", "#how-it-works"],
-    ["Sample Report", "#sample-report"],
+    ["Sample Report", "/sample-report"],
     ["What We Check", "#what-we-check"],
-    ["FAQ", "#faq"],
+    ["FAQ", "/faq"],
     ["Run a Checkup", "#business-search"]
   ];
 
@@ -186,7 +131,7 @@ export default function Home() {
           {!sharedAudit && (
             <>
               <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
-                {view === "splash" && navItems.map(([label, href]) => <a key={label} className="nav-link" href={href}>{label}</a>)}
+                {view === "splash" && navItems.map(([label, href]) => <Link key={label} className="nav-link" href={href}>{label}</Link>)}
                 {ownerMode && <button className={navClass(view === "dashboard")} onClick={() => setView("dashboard")}>Checkups</button>}
                 {ownerMode && <button className={navClass(view === "new")} onClick={() => setView("new")}>New Checkup</button>}
                 {ownerMode && <button className={navClass(view === "report")} disabled={!selectedAudit} onClick={() => setView("report")}>Saved Report</button>}
@@ -199,7 +144,7 @@ export default function Home() {
         </div>
         {mobileMenuOpen && view === "splash" && (
           <nav id="mobile-menu" className="grid gap-2 border-t border-line bg-surface px-4 py-3 lg:hidden" aria-label="Mobile navigation">
-            {navItems.map(([label, href]) => <a key={label} className="nav-link" href={href} onClick={() => setMobileMenuOpen(false)}>{label}</a>)}
+            {navItems.map(([label, href]) => <Link key={label} className="nav-link" href={href} onClick={() => setMobileMenuOpen(false)}>{label}</Link>)}
           </nav>
         )}
       </header>
@@ -244,8 +189,8 @@ function PublicHome({ onRequest, onAuditComplete }) {
             {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
           </p>
           <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
-            <a className="primary-button" href="#business-search">Check my business free</a>
-            <a className="secondary-button" href="#sample-report">See a sample checkup</a>
+            <Link className="primary-button" href="#business-search">Check my business free</Link>
+            <Link className="secondary-button" href="/sample-report">See a sample checkup</Link>
           </div>
           <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
         </div>
@@ -257,13 +202,11 @@ function PublicHome({ onRequest, onAuditComplete }) {
 
       <ProblemSection />
       <WhatWeCheck />
-      <SampleReport checkedDate={checkedDate} />
       <HowScoringWorks />
       <HowItWorks />
       <TrustSection />
       <PilotExample />
       <OfferSection />
-      <FAQSection />
       <FinalCTA onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -348,71 +291,6 @@ function WhatWeCheck() {
         ))}
       </div>
     </section>
-  );
-}
-
-function SampleReport({ checkedDate }) {
-  return (
-    <section id="sample-report" className="sample-report scroll-mt-24">
-      <div className="report-header">
-        <div>
-          <p className="eyebrow">Sample Report · Fictional business</p>
-          <h2>Business Health Score: 68/100</h2>
-          <p>Sample business: Harbor City Dental. Three issues may be costing this business customers.</p>
-        </div>
-        <div className="report-score" aria-label="Business Health Score 68 out of 100">68</div>
-      </div>
-
-      <div className="fix-first">
-        <p className="eyebrow">Fix First</p>
-        <h3>Repair the booking link.</h3>
-        <p>It directly blocks customer action and can be corrected immediately.</p>
-      </div>
-
-      <div className="grid gap-4">
-        {sampleFindings.map((finding, index) => <FindingCard key={finding.title} finding={finding} index={index + 1} checkedDate={checkedDate} />)}
-      </div>
-
-      <div className="category-score-grid">
-        {categoryScores.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
-      </div>
-    </section>
-  );
-}
-
-function FindingCard({ finding, index, checkedDate }) {
-  return (
-    <article className="finding-card">
-      <div className="finding-title-row">
-        <span className="finding-number">{index}</span>
-        <div>
-          <h3>{finding.title}</h3>
-          <p><strong>Impact:</strong> {finding.impact}</p>
-        </div>
-        <span className={`severity-pill ${finding.severity.toLowerCase()}`}>{finding.severity}</span>
-      </div>
-      <dl className="finding-meta">
-        <div><dt>Source checked</dt><dd>{finding.source}</dd></div>
-        <div><dt>Checked</dt><dd>{checkedDate}</dd></div>
-        <div><dt>Value found</dt><dd>{finding.valueFound}</dd></div>
-        <div><dt>Expected value</dt><dd>{finding.expectedValue}</dd></div>
-        <div><dt>Confidence</dt><dd>{finding.confidence}</dd></div>
-        <div><dt>Status</dt><dd>{finding.status}</dd></div>
-      </dl>
-      <p className="recommended-action"><strong>Recommended action:</strong> {finding.action}</p>
-    </article>
-  );
-}
-
-function CategoryScore({ label, score }) {
-  return (
-    <div className="category-score-card">
-      <div className="flex items-center justify-between gap-3">
-        <h3>{label}</h3>
-        <span>{score}</span>
-      </div>
-      <div className="score-bar" aria-hidden="true"><div style={{ width: `${score}%` }} /></div>
-    </div>
   );
 }
 
@@ -552,25 +430,6 @@ function OfferSection() {
   );
 }
 
-function FAQSection() {
-  return (
-    <section id="faq" className="panel-section scroll-mt-24">
-      <div className="section-heading">
-        <p className="eyebrow">FAQ</p>
-        <h2>Clear answers before you run a checkup.</h2>
-      </div>
-      <div className="faq-list">
-        {faqs.map(([question, answer]) => (
-          <details className="faq-item" key={question}>
-            <summary>{question}</summary>
-            <div className="faq-answer"><p>{answer}</p></div>
-          </details>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function FinalCTA({ onRequest }) {
   return (
     <section className="final-cta">
@@ -637,8 +496,10 @@ function SiteFooter() {
         <p className="mt-1">&copy; {year} {BRAND}. Local business presence diagnostics.</p>
       </div>
       <nav className="flex flex-wrap gap-4 font-bold" aria-label="Footer navigation">
-        <a className="link" href="/privacy">Privacy</a>
-        <a className="link" href="/terms">Terms</a>
+        <Link className="link" href="/sample-report">Sample Report</Link>
+        <Link className="link" href="/privacy">Privacy</Link>
+        <Link className="link" href="/faq">FAQ</Link>
+        <Link className="link" href="/terms">Terms</Link>
         {CONTACT_EMAIL ? <a className="link" href={`mailto:${CONTACT_EMAIL}`}>Contact</a> : <span className="text-signal-red">Contact email not configured</span>}
       </nav>
     </footer>
@@ -663,12 +524,6 @@ function navClass(active) {
 }
 
 function buildSchema() {
-  const faqEntities = faqs.map(([question, answer]) => ({
-    "@type": "Question",
-    name: question,
-    acceptedAnswer: { "@type": "Answer", text: answer }
-  }));
-
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -685,10 +540,6 @@ function buildSchema() {
         operatingSystem: "Web",
         url: SITE_URL,
         description: "Local business public-presence diagnostic checkup for inaccurate details, trust gaps, and customer-action links."
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: faqEntities
       }
     ]
   };

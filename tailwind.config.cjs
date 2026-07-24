@@ -10,6 +10,8 @@ module.exports = {
         paper: COLORS.paper,
         surface: COLORS.surface,
         "nested-surface": COLORS.nestedSurface,
+        "search-surface": COLORS.searchSurface,
+        "search-line": COLORS.searchLine,
         brand: COLORS.brand,
         "brand-soft": COLORS.brandSoft,
         "signal-green": COLORS.signalGreen,

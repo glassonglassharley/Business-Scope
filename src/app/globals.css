@@ -386,7 +386,12 @@ a {
   }
 
   .diagnostic-form {
-    @apply scroll-mt-28 rounded-2xl border border-line bg-surface p-4 text-ink shadow-soft sm:p-5;
+    @apply relative overflow-hidden scroll-mt-28 rounded-2xl border-2 border-search-line bg-search-surface p-4 text-ink shadow-soft sm:p-5;
+  }
+
+  .diagnostic-form::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-1 bg-brand;
   }
 
   .field-label {
