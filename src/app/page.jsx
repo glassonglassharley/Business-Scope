@@ -27,21 +27,6 @@ const problemCards = [
   { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High" }
 ];
 
-const checkGroups = [
-  {
-    title: "Business Details",
-    items: ["Business name", "Address", "Phone number", "Business hours", "Website", "Service area", "Major public listings"]
-  },
-  {
-    title: "Customer Trust",
-    items: ["Review recency", "Review responses", "Photos", "Profile depth", "Description quality", "Category selection", "Conflicting information"]
-  },
-  {
-    title: "Customer Actions",
-    items: ["Call buttons", "Directions", "Booking links", "Ordering links", "Quote forms", "Menu links", "Mobile usability", "Dead or redirected links"]
-  }
-];
-
 const howItWorks = [
   "Find and confirm your business.",
   "StreetSignal checks the public customer journey.",
@@ -115,7 +100,7 @@ export default function Home() {
   const navItems = [
     ["How It Works", "#how-it-works"],
     ["Sample Report", "/sample-report"],
-    ["What We Check", "#what-we-check"],
+    ["What We Check", "/what-we-check"],
     ["FAQ", "/faq"],
     ["Run a Checkup", "#business-search"]
   ];
@@ -203,7 +188,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
 
       <HowItWorks />
       <ProblemSection />
-      <WhatWeCheck />
       <TrustSection />
       <FinalCTA onRequest={onRequest} />
       <SiteFooter />
@@ -267,28 +251,6 @@ function ProblemCard({ title, body, status }) {
       <h3>{title}</h3>
       <p>{body}</p>
     </article>
-  );
-}
-
-function WhatWeCheck() {
-  return (
-    <section id="what-we-check" className="panel-section scroll-mt-24">
-      <div className="section-heading">
-        <p className="eyebrow">What StreetSignal checks</p>
-        <h2>A structured look at the public customer journey.</h2>
-        <p>StreetSignal separates basic facts, trust signals, and customer-action paths so a business can see what to fix first.</p>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        {checkGroups.map((group) => (
-          <article key={group.title} className="check-group">
-            <h3>{group.title}</h3>
-            <ul>
-              {group.items.map((item) => <li key={item}>{item}</li>)}
-            </ul>
-          </article>
-        ))}
-      </div>
-    </section>
   );
 }
 
