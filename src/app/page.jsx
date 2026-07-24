@@ -185,6 +185,7 @@ function PublicHome({ onAuditComplete }) {
       <HowItWorks />
       <ProblemSection />
       <TrustSection />
+      <CommercialPath />
       <SiteFooter />
     </div>
   );
@@ -283,6 +284,23 @@ function TrustSection() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
+      </div>
+    </section>
+  );
+}
+
+function CommercialPath() {
+  return (
+    <section className="panel-section">
+      <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <p className="eyebrow">Commercial path</p>
+          <h2>The checkup is free.</h2>
+          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+            If you want us to fix the issues, we can provide a clearly scoped cleanup plan. Ongoing monitoring is optional.
+          </p>
+        </div>
+        <Link className="primary-button w-full md:w-auto" href="#business-search">Run my free checkup</Link>
       </div>
     </section>
   );

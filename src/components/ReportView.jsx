@@ -145,6 +145,16 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
 }
 
 function PlacesHealthSection({ breakdown }) {
+  const [checkView, setCheckView] = useState("issues");
+  const showAllChecks = checkView === "all";
+  const issueMetricIds = useMemo(
+    () => new Set((breakdown.prioritizedIssues || []).map((issue) => issue.id)),
+    [breakdown.prioritizedIssues]
+  );
+  const displayedCategories = showAllChecks
+    ? breakdown.categories
+    : breakdown.categories.filter((category) => category.metrics.some((metric) => issueMetricIds.has(`${category.key}-${metric.id}`)));
+
   return (
     <section className="print-break-inside border-b border-line p-5 sm:p-7">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -167,8 +177,35 @@ function PlacesHealthSection({ breakdown }) {
         </div>
       </div>
 
+      <div className="no-print mt-5 flex flex-col gap-3 rounded-lg border border-line bg-nested-surface p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-bold text-slate-700">Detailed checks view</p>
+        <div className="grid gap-2 sm:inline-grid sm:grid-cols-2">
+          <button
+            type="button"
+            className={checkToggleClass(!showAllChecks)}
+            aria-pressed={!showAllChecks}
+            onClick={() => setCheckView("issues")}
+          >
+            Show issues only
+          </button>
+          <button
+            type="button"
+            className={checkToggleClass(showAllChecks)}
+            aria-pressed={showAllChecks}
+            onClick={() => setCheckView("all")}
+          >
+            Show all checks
+          </button>
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {breakdown.categories.map((category) => <PlacesCategoryCard key={category.key} category={category} />)}
+        {displayedCategories.map((category) => <PlacesCategoryCard key={category.key} category={category} issueMetricIds={issueMetricIds} showAllChecks={showAllChecks} />)}
+        {!showAllChecks && displayedCategories.length === 0 && (
+          <div className="rounded-lg border border-line bg-nested-surface p-4 text-sm font-bold leading-6 text-slate-700 lg:col-span-2">
+            No issue checks were found in the detailed scan. Use “Show all checks” to review every available and unavailable check.
+          </div>
+        )}
       </div>
 
       {breakdown.prioritizedIssues?.length > 0 && (
@@ -183,13 +220,17 @@ function PlacesHealthSection({ breakdown }) {
   );
 }
 
-function PlacesCategoryCard({ category }) {
+function PlacesCategoryCard({ category, issueMetricIds, showAllChecks }) {
   const measured = category.status === "measured";
   const unavailable = category.status === "scan_unavailable";
   const band = measured ? bandForScore(category.score) : null;
   const statusText = measured ? "Completed check" : unavailable ? "Unavailable - could not run this check" : "Not included in this checkup";
   const scoreText = measured ? category.score : unavailable ? "Unavailable" : "Pending";
   const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-slate-500";
+  const issueMetrics = category.metrics.filter((metric) => issueMetricIds.has(`${category.key}-${metric.id}`));
+  const availableNonIssueMetrics = category.metrics.filter((metric) => typeof metric.score === "number" && !issueMetricIds.has(`${category.key}-${metric.id}`));
+  const unavailableMetrics = category.metrics.filter((metric) => metric.score === null);
+  const visibleMetrics = showAllChecks ? [...issueMetrics, ...availableNonIssueMetrics] : issueMetrics;
 
   return (
     <div className="rounded-lg border border-line bg-surface p-4 shadow-soft">
@@ -210,15 +251,35 @@ function PlacesCategoryCard({ category }) {
         </div>
       )}
       <div className="mt-3 grid gap-2">
-        {category.metrics.map((metric) => (
+        {visibleMetrics.map((metric) => (
           <div key={metric.id} className="min-w-0 rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
             <div className="font-black text-ink">{metric.label}</div>
             <div className="mt-1 break-words">{metric.score === null ? "Not available from this checkup" : `${metric.score}/100`} - {metric.note}</div>
           </div>
         ))}
+        {showAllChecks && unavailableMetrics.length > 0 && (
+          <details className="rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
+            <summary className="cursor-pointer font-black text-ink">Unavailable checks ({unavailableMetrics.length})</summary>
+            <div className="mt-3 grid gap-2">
+              {unavailableMetrics.map((metric) => (
+                <div key={metric.id} className="rounded-md border border-line bg-surface p-3">
+                  <div className="font-black text-ink">{metric.label}</div>
+                  <div className="mt-1 break-words">Not available from this checkup - {metric.note}</div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
+}
+
+function checkToggleClass(active) {
+  return [
+    "rounded-md border px-4 py-2 text-sm font-black transition",
+    active ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink hover:border-brand hover:text-brand"
+  ].join(" ");
 }
 
 function PriorityIssueBox({ issue }) {
