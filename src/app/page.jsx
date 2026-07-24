@@ -189,7 +189,6 @@ function PublicHome({ onRequest, onAuditComplete }) {
 
       <WhatYouGet />
       <SampleVisibilitySnapshot />
-      <SocialProof />
       <NoPressure onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -391,23 +390,6 @@ function SampleBreakdownCategory({ category }) {
     </div>
   );
 }
-function SocialProof() {
-  return (
-    <section className="panel p-5">
-      <p className="eyebrow">Founder note</p>
-      <h3 className="mt-3 text-2xl font-black text-ink">Why I built {BRAND}</h3>
-      <blockquote className="mt-3 rounded-lg border border-line bg-nested-surface p-4 text-sm leading-6 text-slate-700">
-        <p>
-          I kept watching good local businesses lose customers over small, fixable things: wrong hours on Google, a dead menu link, a phone number that didn&apos;t match. Stuff the owner had no idea was costing them. {BRAND}{" "}is the snapshot I wish those businesses had: plain-English, no jargon, no sales pressure. Just a clear picture of what&apos;s leaking customers and what to fix first.
-        </p>
-      </blockquote>
-      <p className="mt-4 text-sm leading-6 text-slate-700">
-        Built for small businesses that need practical online cleanup, not another confusing marketing dashboard.
-      </p>
-    </section>
-  );
-}
-
 function NoPressure({ onRequest }) {
   return (
     <section className="panel p-5">

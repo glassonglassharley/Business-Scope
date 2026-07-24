@@ -58,3 +58,13 @@ Focus:
 ## Current Validation Target
 
 One real small business owner replies with interest and asks to see the business snapshot.
+
+## Saved Public-Page Copy for Later
+
+### Founder note
+
+Why I built StreetSignal
+
+I kept watching good local businesses lose customers over small, fixable things: wrong hours on Google, a dead menu link, a phone number that didn't match. Stuff the owner had no idea was costing them. StreetSignal is the snapshot I wish those businesses had: plain-English, no jargon, no sales pressure. Just a clear picture of what's leaking customers and what to fix first.
+
+Built for small businesses that need practical online cleanup, not another confusing marketing dashboard.
