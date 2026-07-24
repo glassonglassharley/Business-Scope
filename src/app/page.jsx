@@ -14,6 +14,7 @@ import { decodeAuditFromUrl } from "@/lib/shareLinks";
 const SETTINGS_KEY = "digitalHealthScore.settings.v1";
 const REQUESTS_KEY = "businessScope.requests.v1";
 const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
+const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "hello@streetsignal.com";
 
 const defaultSettings = {
   preparerName: BRAND
@@ -202,11 +203,9 @@ function PublicHome({ onRequest, onAuditComplete }) {
 
       <ProblemSection />
       <WhatWeCheck />
-      <HowScoringWorks />
       <HowItWorks />
       <TrustSection />
       <PilotExample />
-      <OfferSection />
       <FinalCTA onRequest={onRequest} />
       <SiteFooter />
     </div>
@@ -294,29 +293,6 @@ function WhatWeCheck() {
   );
 }
 
-function HowScoringWorks() {
-  return (
-    <section className="panel-section">
-      <div className="section-heading">
-        <p className="eyebrow">Score explanation</p>
-        <h2>Plain-English scoring, not internal math.</h2>
-        <p>Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.</p>
-      </div>
-      <div className="rounded-xl border border-line bg-nested-surface p-4 sm:p-5">
-        <p className="text-xl font-black text-ink">Checks completed: 76%</p>
-        <details className="faq-item mt-4">
-          <summary>How scoring works</summary>
-          <div className="faq-answer">
-            <p>StreetSignal reviews information accuracy, search visibility, customer trust, and conversion paths. More severe issues affect the score more because they are more likely to stop a customer from calling, visiting, booking, or ordering.</p>
-            <p>Incomplete checks are shown separately instead of being treated as confirmed problems. Priorities are ranked by customer impact, confidence, and how directly the issue blocks action.</p>
-            <p>The score is a diagnostic guide, not a guarantee of revenue.</p>
-          </div>
-        </details>
-      </div>
-    </section>
-  );
-}
-
 function HowItWorks() {
   return (
     <section id="how-it-works" className="panel-section scroll-mt-24">
@@ -368,19 +344,7 @@ function TrustSection() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {trustPoints.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
       </div>
-      <FounderPlaceholder />
     </section>
-  );
-}
-
-function FounderPlaceholder() {
-  return (
-    <article className="operator-note">
-      {/* TODO: Replace this placeholder with real project-owner/founder details before publishing founder-specific copy. */}
-      <p className="eyebrow">Operator note</p>
-      <h3>Built for practical online cleanup, not vague marketing theater.</h3>
-      <p>StreetSignal is currently presented without a named founder bio because verified public founder details are not configured in the codebase yet.</p>
-    </article>
   );
 }
 
@@ -417,16 +381,6 @@ function CaseList({ title, items, tone }) {
         {items.map((item) => <li key={item}><span className={`severity-dot ${tone}`} aria-hidden="true" />{item}</li>)}
       </ul>
     </div>
-  );
-}
-
-function OfferSection() {
-  return (
-    <section className="offer-section">
-      <p className="eyebrow">Commercial path</p>
-      <h2>The initial checkup is free.</h2>
-      <p>If you want help correcting the issues, StreetSignal can provide a clearly scoped cleanup plan. Ongoing monitoring can be offered separately.</p>
-    </section>
   );
 }
 
@@ -500,7 +454,7 @@ function SiteFooter() {
         <Link className="link" href="/privacy">Privacy</Link>
         <Link className="link" href="/faq">FAQ</Link>
         <Link className="link" href="/terms">Terms</Link>
-        {CONTACT_EMAIL ? <a className="link" href={`mailto:${CONTACT_EMAIL}`}>Contact</a> : <span className="text-signal-red">Contact email not configured</span>}
+        <a className="link" href={`mailto:${FOOTER_CONTACT_EMAIL}`}>Contact: {FOOTER_CONTACT_EMAIL}</a>
       </nav>
     </footer>
   );
