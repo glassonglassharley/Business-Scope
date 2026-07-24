@@ -95,7 +95,7 @@ a {
   }
 
   .hero-copy {
-    @apply min-w-0 self-center;
+    @apply min-w-0 self-start;
   }
 
   .hero-copy h1,
