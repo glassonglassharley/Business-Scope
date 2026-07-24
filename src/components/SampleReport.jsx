@@ -1,32 +1,50 @@
-import { SAMPLE_CATEGORY_SCORES, SAMPLE_FINDINGS } from "@/lib/sampleReport";
+"use client";
+
+import { useEffect, useState } from "react";
+import { SAMPLE_REPORTS } from "@/lib/sampleReport";
 
 export function SampleReport({ checkedDate }) {
+  const [report, setReport] = useState(SAMPLE_REPORTS[0]);
+
+  useEffect(() => {
+    queueMicrotask(() => setReport(selectSampleReport()));
+  }, []);
+
   return (
     <section id="sample-report" className="sample-report scroll-mt-24">
       <div className="report-header">
         <div>
           <p className="eyebrow">Sample Report · Fictional business</p>
-          <h2>Business Health Score: 68/100</h2>
-          <p>Sample business: Harbor City Dental. Three issues may be costing this business customers.</p>
+          <h2>Business Health Score: {report.score}/100</h2>
+          <p>Sample business: {report.businessName}. {report.summary}</p>
         </div>
-        <div className="report-score" aria-label="Business Health Score 68 out of 100">68</div>
+        <div className="report-score" aria-label={`Business Health Score ${report.score} out of 100`}>{report.score}</div>
       </div>
 
       <div className="category-score-grid">
-        {SAMPLE_CATEGORY_SCORES.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
+        {report.categoryScores.map(([label, score]) => <CategoryScore key={label} label={label} score={score} />)}
       </div>
 
       <div className="fix-first">
         <p className="eyebrow">Fix First</p>
-        <h3>Repair the booking link.</h3>
-        <p>It directly blocks customer action and can be corrected immediately.</p>
+        <h3>{report.fixFirst.title}</h3>
+        <p>{report.fixFirst.body}</p>
       </div>
 
       <div className="grid gap-4">
-        {SAMPLE_FINDINGS.map((finding, index) => <FindingCard key={finding.title} finding={finding} index={index + 1} checkedDate={checkedDate} />)}
+        {report.findings.map((finding, index) => <FindingCard key={finding.title} finding={finding} index={index + 1} checkedDate={checkedDate} />)}
       </div>
     </section>
   );
+}
+
+function selectSampleReport() {
+  const storageKey = "streetSignal.sampleReportIndex.v1";
+  const lastIndex = Number(window.sessionStorage.getItem(storageKey));
+  const availableIndexes = SAMPLE_REPORTS.map((_, index) => index).filter((index) => index !== lastIndex);
+  const nextIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)] ?? 0;
+  window.sessionStorage.setItem(storageKey, String(nextIndex));
+  return SAMPLE_REPORTS[nextIndex];
 }
 
 function FindingCard({ finding, index, checkedDate }) {
