@@ -157,26 +157,22 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   }
 
   function useCurrentLocation() {
-    setMessage("");
+    setLocationStatus("");
     if (!navigator.geolocation) {
-      setStatus("geolocation_denied");
-      setLocationStatus("Your browser does not support location lookup. You can still enter a city or area.");
+      setLocationStatus("Location is not supported in this browser — enter a city instead.");
       return;
     }
 
-    setLocationStatus("Asking your browser for your current area. StreetSignal receives approximate coordinates only if you allow it.");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude.toFixed(5);
         const lng = position.coords.longitude.toFixed(5);
         setCoordinates(`${lat},${lng}`);
         setErrors((current) => ({ ...current, location: "" }));
-        setLocationStatus("Current area added to help find the correct business. You still confirm the listing before the scan runs.");
       },
       () => {
         setCoordinates("");
-        setStatus("geolocation_denied");
-        setLocationStatus("Location permission was denied. Search still works if you enter a city or area.");
+        setLocationStatus("Location denied — enter a city instead.");
       },
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 }
     );
@@ -231,8 +227,9 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
             onClick={useCurrentLocation}
             disabled={busy}
           >
-            Use my current area to find the correct business
+            Use current location
           </button>
+          {locationStatus && <span id="location-status" className="text-xs font-semibold text-slate-500">{locationStatus}</span>}
           {query && (
             <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-600">
               <a className="link" href={mapsUrl} target="_blank" rel="noopener noreferrer">Open this search in Google Maps</a>
@@ -241,12 +238,8 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
           )}
         </div>
 
-        {(message || locationStatus) && <div className="min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">
-          {message || <span id="location-status">{locationStatus}</span>}
-        </div>}
+        {message && <div className="min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">{message}</div>}
       </div>
-
-      {locationStatus && message && <p id="location-status" className="mt-2 text-xs leading-5 text-slate-600">{locationStatus}</p>}
 
       {(candidates.length > 0 || selectedCandidate) && (
         <div className="mt-4 rounded-xl border border-line bg-nested-surface p-3 sm:p-4">
@@ -285,7 +278,6 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
 
       {status === "not_found" && <StateNote tone="amber" title="Business not found" body="Try the full Google listing name, add the city, or use the current-area option. Service-area businesses may appear without a public address." />}
       {status === "rate_limited" && <StateNote tone="red" title="Scan temporarily limited" body="The lookup provider is rate-limiting requests. Please wait and retry; StreetSignal will not show raw provider errors to customers." />}
-      {status === "geolocation_denied" && <StateNote tone="amber" title="Location not used" body="You can still run the checkup by entering a city, neighborhood, or service area." />}
       {status === "failed" && <StateNote tone="red" title="Checkup could not run" body="The public lookup service did not complete. No listing access or password is required; please retry in a moment." />}
     </form>
   );
