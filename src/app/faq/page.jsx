@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 import { BRAND, SITE_URL } from "@/lib/brand";
 import { STREET_SIGNAL_FAQS } from "@/lib/faqs";
 
@@ -15,7 +16,9 @@ export const metadata = {
 
 export default function FAQPage() {
   return (
-    <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
+    <>
+      <SiteHeader />
+      <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqSchema()) }} />
       <article className="mx-auto max-w-4xl rounded-2xl border border-line bg-surface p-5 shadow-soft sm:p-8">
         <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
@@ -40,7 +43,8 @@ export default function FAQPage() {
           <Link className="primary-button mt-4" href="/#business-search">Run my free checkup</Link>
         </div>
       </article>
-    </main>
+      </main>
+    </>
   );
 }
 

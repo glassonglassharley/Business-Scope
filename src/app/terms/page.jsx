@@ -1,5 +1,6 @@
 import { BRAND, CONTACT_EMAIL, SITE_URL } from "@/lib/brand";
 import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata = {
   title: "Terms",
@@ -11,7 +12,9 @@ const effectiveDate = "July 24, 2026";
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen px-5 py-8">
+    <>
+      <SiteHeader />
+      <main className="min-h-screen px-5 py-8">
       <article className="panel mx-auto max-w-3xl p-7">
         <Link className="link text-sm font-black" href="/">← Back to {BRAND}</Link>
         <p className="eyebrow mt-6">Terms</p>
@@ -52,7 +55,8 @@ export default function TermsPage() {
           </Section>
         </div>
       </article>
-    </main>
+      </main>
+    </>
   );
 }
 

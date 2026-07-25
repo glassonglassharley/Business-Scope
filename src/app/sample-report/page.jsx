@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SampleReport } from "@/components/SampleReport";
+import { SiteHeader } from "@/components/SiteHeader";
 import { BRAND, SITE_URL } from "@/lib/brand";
 
 export const metadata = {
@@ -17,7 +18,9 @@ export default function SampleReportPage() {
   const checkedDate = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date());
 
   return (
-    <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
+    <>
+      <SiteHeader />
+      <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
       <div className="mx-auto grid max-w-7xl gap-5">
         <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
         <SampleReport checkedDate={checkedDate} />
@@ -27,6 +30,7 @@ export default function SampleReportPage() {
           <Link className="primary-button mt-4" href="/#business-search">Run my free checkup</Link>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CleanupRequestForm } from "@/components/CleanupRequestForm";
+import { SiteHeader } from "@/components/SiteHeader";
 import { BRAND, CONTACT_EMAIL, SITE_URL } from "@/lib/brand";
 
 const contactEmail = CONTACT_EMAIL || "hello@streetsignal.com";
@@ -46,7 +47,9 @@ export const metadata = {
 
 export default function CleanupPage() {
   return (
-    <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
+    <>
+      <SiteHeader />
+      <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
       <div className="mx-auto grid max-w-7xl gap-8">
         <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
 
@@ -114,7 +117,8 @@ export default function CleanupPage() {
           <a className="primary-button w-full sm:w-auto" href="#cleanup-request">Request cleanup plan</a>
         </section>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
