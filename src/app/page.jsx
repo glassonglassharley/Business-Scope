@@ -6,7 +6,7 @@ import { AuditDashboard } from "@/components/AuditDashboard";
 import { BusinessSearch } from "@/components/BusinessSearch";
 import { NewAuditForm } from "@/components/NewAuditForm";
 import { ReportView } from "@/components/ReportView";
-import { BRAND, CONTACT_EMAIL, OFFER, SITE_DESCRIPTOR, SITE_URL } from "@/lib/brand";
+import { BRAND, CONTACT_EMAIL, OFFER, SITE_URL } from "@/lib/brand";
 import { getAudits, saveAudit, seedAuditsIfEmpty } from "@/lib/auditStore";
 import { buildAudit } from "@/lib/buildAudit";
 import { decodeAuditFromUrl } from "@/lib/shareLinks";
@@ -243,12 +243,7 @@ function PublicHome({ onAuditComplete }) {
     <div className="grid gap-8">
       <section className="hero-grid">
         <div className="hero-copy">
-          <p className="eyebrow">{SITE_DESCRIPTOR}</p>
           <h1>Find the online mistakes costing you calls, visits, and bookings.</h1>
-          <p className="hero-subcopy">
-            {BRAND} checks the public details customers see before they contact your business—from hours and phone numbers to reviews, menus, websites, and booking links.
-          </p>
-          <p className="mt-3 text-sm font-bold text-slate-700">No account or listing access required.</p>
           <BusinessSearch onAuditComplete={onAuditComplete} variant="compact" />
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
