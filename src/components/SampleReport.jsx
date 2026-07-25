@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { bandForScore } from "@/lib/scoring";
 import { BRAND } from "@/lib/brand";
 import {
@@ -10,15 +9,22 @@ import {
 } from "@/lib/sampleReport";
 
 /**
- * Mirrors ReportView.jsx's structure, category names, states, and single
- * locked-scan paywall pattern so a prospect sees the same report language
- * here as on their first real scan. Always renders the free (locked) view —
- * a fictional business has nothing real to unlock, so the unlock button
- * routes to the real checkup instead of toggling local state.
+ * Mirrors ReportView.jsx's structure, category names, and states so a
+ * prospect sees the same report language here as on their first real scan.
+ * Shows the full report, no paywall — every category is illustrated,
+ * including the ones a real free scan keeps locked.
  */
 export function SampleReport({ checkedDate }) {
   const band = bandForScore(SAMPLE_SCORE_TOTAL);
   const weakestCategory = [...SAMPLE_CATEGORIES].sort((a, b) => a.score - b.score)[0];
+  // The shared band verdict is score-only and identical for any 71-100 -
+  // it doesn't know this sample has one genuinely weak category. Name it
+  // specifically here instead, falling back to the generic verdict if the
+  // sample data changes enough that this qualifier no longer applies.
+  const hasVisibleWeakSpot = weakestCategory.score <= 60 && band.label === "Strong";
+  const verdictLine = hasVisibleWeakSpot
+    ? `Your digital foundation is strong, but ${weakestCategory.label} is a clear gap still worth fixing.`
+    : band.verdict;
 
   return (
     <article id="sample-report" className="scroll-mt-24 overflow-hidden rounded-lg border border-line bg-surface shadow-soft">
@@ -29,7 +35,7 @@ export function SampleReport({ checkedDate }) {
           <p className="mt-2 text-base font-semibold text-slate-600">
             {SAMPLE_BUSINESS.industry} | {SAMPLE_BUSINESS.city} | Checked {checkedDate}
           </p>
-          <p className={`mt-5 max-w-3xl text-lg font-black sm:text-xl ${band.textClass}`}>{band.verdict}</p>
+          <p className={`mt-5 max-w-3xl text-lg font-black sm:text-xl ${band.textClass}`}>{verdictLine}</p>
         </div>
         <div className={`w-full rounded-lg border-2 p-5 text-center sm:w-auto ${band.panelClass}`}>
           <div className="text-xs font-black uppercase tracking-[0.16em]">{BRAND}</div>
@@ -58,7 +64,7 @@ export function SampleReport({ checkedDate }) {
         </div>
       </section>
 
-      <section className="border-b border-line p-5 sm:p-7">
+      <section className="p-5 sm:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="eyebrow">Business Health Score</p>
@@ -79,26 +85,9 @@ export function SampleReport({ checkedDate }) {
         </div>
 
         <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">Free prioritized next fixes</h4>
+          <h4 className="font-black text-ink">Prioritized next fixes</h4>
           <div className="mt-3 grid gap-3">
             {SAMPLE_PRIORITIZED_ISSUES.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
-          </div>
-        </div>
-      </section>
-
-      <section className="p-5 sm:p-7">
-        <div className="rounded-xl border border-brand/30 bg-brand-soft p-5 shadow-soft">
-          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div>
-              <div className="text-xs font-black uppercase tracking-[0.14em] text-brand">Locked full scan</div>
-              <h4 className="mt-2 text-2xl font-black text-ink">Unlock the full scan</h4>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
-                Get secondary listings, content freshness, and the complete cross-source action plan.
-              </p>
-            </div>
-            <Link className="primary-button w-full sm:w-auto" href="/#business-search">
-              Unlock Full Report — $19
-            </Link>
           </div>
         </div>
       </section>
@@ -143,7 +132,7 @@ function SampleCategoryCard({ category }) {
         {category.metrics.map((metric) => (
           <div key={metric.id} className="min-w-0 rounded-md border border-line bg-nested-surface p-3 text-sm leading-5 text-slate-700">
             <div className="font-black text-ink">{metric.label}</div>
-            <div className="mt-1 break-words">{metric.score}/100 - {metric.note}</div>
+            <div className="mt-1 break-words">{metric.score === null ? "Not available from this checkup" : `${metric.score}/100`} - {metric.note}</div>
           </div>
         ))}
       </div>
