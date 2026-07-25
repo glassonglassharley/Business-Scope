@@ -15,6 +15,7 @@ const SETTINGS_KEY = "digitalHealthScore.settings.v1";
 const REQUESTS_KEY = "businessScope.requests.v1";
 const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
 const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "hello@streetsignal.com";
+const SANDBOX_FIX_PRICE = 49;
 
 const defaultSettings = {
   preparerName: BRAND
@@ -473,15 +474,36 @@ function TrustSection() {
 function CommercialPath() {
   return (
     <section className="panel-section">
-      <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
-        <div>
-          <p className="eyebrow">Commercial path</p>
-          <h2>The checkup is free.</h2>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-            If you want us to fix the issues, we can provide a clearly scoped cleanup plan. Ongoing monitoring is optional.
-          </p>
-        </div>
-        <Link className="primary-button w-full md:w-auto" href="#business-search">Run my free checkup</Link>
+      <div className="section-heading">
+        <p className="eyebrow">Commercial path</p>
+        <h2>The checkup is free.</h2>
+        <p>If you want us to fix what we find, choose how far to go. Ongoing monitoring is optional.</p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <article className="panel-card">
+          <p className="eyebrow">Step 1</p>
+          <h3>Free Checkup</h3>
+          <p className="mt-3 text-3xl font-black tracking-tight text-ink">Free</p>
+          <p>Run the public-presence scan and see exactly what is costing you calls, visits, and bookings.</p>
+          <Link className="primary-button mt-4 w-full" href="#business-search">Run my free checkup</Link>
+        </article>
+        <article className="panel-card">
+          <p className="eyebrow">Try it first</p>
+          <h3>Sandbox Fix</h3>
+          <p className="mt-3 text-3xl font-black tracking-tight text-ink">~${SANDBOX_FIX_PRICE}</p>
+          <p>Real work, not a preview. We fix one real issue from your report, your top critical item, so you see an actual result before committing further.</p>
+          <div className="mt-4 rounded-xl border border-line bg-nested-surface p-3 text-sm leading-6 text-slate-700">
+            <strong className="text-ink">Credited toward the Full Cleanup:</strong> if you upgrade, the Sandbox Fix fee comes off the $297 price. Trying first costs nothing extra.
+          </div>
+          <Link className="secondary-button mt-4 w-full" href="/cleanup#cleanup-request">Request a Sandbox Fix</Link>
+        </article>
+        <article className="panel-card">
+          <p className="eyebrow">Full scope</p>
+          <h3>Full Cleanup</h3>
+          <p className="mt-3 text-3xl font-black tracking-tight text-ink">$297</p>
+          <p>We fix all Critical and High issues and align your key public details, with your approval on every change.</p>
+          <Link className="primary-button mt-4 w-full" href="/cleanup#cleanup-request">Request Full Cleanup</Link>
+        </article>
       </div>
     </section>
   );
