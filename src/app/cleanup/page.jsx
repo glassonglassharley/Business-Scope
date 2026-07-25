@@ -5,24 +5,16 @@ import { BRAND, CONTACT_EMAIL, SITE_URL } from "@/lib/brand";
 
 const contactEmail = CONTACT_EMAIL || "hello@streetsignal.com";
 
-const includedItems = [
-  "Fix all Critical and High issues from your report",
-  "Align key public details (phone, hours, website, booking links, services, etc.)",
-  "Make sure information is consistent across major public listings",
-  "Deliver a short before/after summary when the work is complete",
-  "You approve every change before it goes live"
-];
-
 const steps = [
   "Run the free StreetSignal checkup",
-  "Choose a cleanup plan",
-  "We fix the issues (with your approval)",
+  "Choose Sandbox Fix ($49) or go straight to Full Cleanup ($297)",
+  "We do the work (with your approval)",
   "You receive a before/after summary"
 ];
 
 const packageItems = [
-  "Fixes all Critical and High issues",
-  "Aligns key public business details",
+  "Makes every fixed issue live",
+  "Publishes your aligned business details",
   "Before/after summary included",
   "No changes without your approval"
 ];
@@ -58,19 +50,15 @@ export default function CleanupPage() {
             <p className="eyebrow">Cleanup Service</p>
             <h1>We’ll fix the issues StreetSignal found</h1>
             <p className="hero-subcopy">
-              After your free checkup, we can clean up the public details that are costing you calls, visits, and bookings. No changes are ever made without your approval.
+              After your free checkup, we build your full cleanup and show you the finished result — with a few pieces already live so you can see it's real. From there, $297 unlocks making everything live. No changes are ever made without your approval.
             </p>
             <a className="primary-button mt-6 w-full sm:w-auto" href="#cleanup-request">Request cleanup plan</a>
           </div>
-          <CleanupRequestForm contactEmail={contactEmail} />
-        </section>
-
-        <section className="panel-section">
-          <div className="section-heading">
-            <p className="eyebrow">What you get</p>
-            <h2>What’s included</h2>
+          <div>
+            <span id="cleanup-request-sandbox" />
+            <span id="cleanup-request-full" />
+            <CleanupRequestForm contactEmail={contactEmail} />
           </div>
-          <Checklist items={includedItems} />
         </section>
 
         <section className="panel-section">
@@ -86,18 +74,36 @@ export default function CleanupPage() {
         <section className="panel-section">
           <div className="section-heading">
             <p className="eyebrow">Pricing</p>
-            <h2>Simple pricing</h2>
+            <h2>Try it first, or go all in.</h2>
           </div>
-          <article className="rounded-2xl border-2 border-brand/60 bg-search-surface p-5 shadow-soft sm:p-6 lg:max-w-xl">
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-start">
-              <div>
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-brand">Full Cleanup</p>
-                <h3 className="mt-2 text-3xl font-black tracking-tight text-ink">$297</h3>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <article className="rounded-2xl border-2 border-brand/60 bg-search-surface p-5 shadow-soft sm:p-6">
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.14em] text-brand">Sandbox Fix</p>
+                  <h3 className="mt-2 text-3xl font-black tracking-tight text-ink">$49</h3>
+                </div>
+                <a className="primary-button w-full sm:w-auto" href="#cleanup-request-sandbox">Request Sandbox Fix</a>
               </div>
-              <a className="primary-button w-full sm:w-auto" href="#cleanup-request">Request Full Cleanup</a>
-            </div>
-            <Checklist items={packageItems} compact />
-          </article>
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                We build the entire cleanup — every Critical and High issue from your report — and show you the finished result. A few of the fixes go live immediately, so you can confirm it's real work, not a mockup.
+              </p>
+              <div className="mt-4 rounded-xl border border-line bg-nested-surface p-3 text-sm leading-6 text-slate-700">
+                <strong className="text-ink">Credited toward the Full Cleanup:</strong> $297 unlocks making the rest of it live — everything you already saw finished. Your $49 comes off that price.
+              </div>
+            </article>
+
+            <article className="rounded-2xl border-2 border-brand/60 bg-search-surface p-5 shadow-soft sm:p-6">
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.14em] text-brand">Full Cleanup</p>
+                  <h3 className="mt-2 text-3xl font-black tracking-tight text-ink">$297</h3>
+                </div>
+                <a className="primary-button w-full sm:w-auto" href="#cleanup-request-full">Request Full Cleanup</a>
+              </div>
+              <Checklist items={packageItems} compact />
+            </article>
+          </div>
         </section>
 
         <section className="trust-section">
