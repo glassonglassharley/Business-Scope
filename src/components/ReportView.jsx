@@ -63,7 +63,6 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
           <div className="text-xs font-black uppercase tracking-[0.16em]">{BRAND}</div>
           <div className="mt-2 text-6xl font-black leading-none sm:text-7xl">{audit.score.total}</div>
           <div className="mt-1 text-sm font-black">out of 100 | {band.label}</div>
-          {audit.score?.breakdown?.hasScanError && <p className="mt-3 text-xs font-bold leading-5">Provisional: one check could not run this time.</p>}
         </div>
       </header>
 
@@ -100,24 +99,13 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
         </section>
       )}
 
-      {healthScore && <BusinessHealthSection healthScore={healthScore} fullReportUnlocked={fullReportUnlocked} onUnlock={() => setFullReportUnlocked(true)} />}
+      {healthScore && <BusinessHealthSection healthScore={healthScore} fullReportUnlocked={fullReportUnlocked} />}
 
-      <section className="print-break-inside border-b border-line p-5 sm:p-7">
-        <h3 className="text-2xl font-black text-ink">Top Gaps Costing Customers</h3>
-        <div className="mt-4 grid gap-3">
-          {audit.gaps.map((gap, index) => (
-            <div key={gap.id} className="rounded-lg border border-line bg-paper p-4">
-              <div className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-signal-red text-sm font-black text-white">{index + 1}</span>
-                <div>
-                  <h4 className="font-black text-ink">{gap.title}</h4>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">{gap.body}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {healthScore && !fullReportUnlocked && (
+        <section className="print-break-inside border-b border-line p-5 sm:p-7">
+          <LockedReportSection onUnlock={() => setFullReportUnlocked(true)} />
+        </section>
+      )}
 
       <section className="print-break-inside border-b border-line p-5 sm:p-7">
         <h3 className="text-2xl font-black text-ink">What Fixing This Looks Like</h3>
@@ -164,7 +152,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
 
 const PAID_PLACES_CATEGORY_KEYS = new Set(["contentFreshness", "aiVisibility"]);
 const FREE_ONLINE_PRESENCE_METRIC_IDS = new Set(["websitePhone", "websiteAddress"]);
-const PAID_ONLINE_PRESENCE_METRIC_IDS = new Set(["yelpPresence", "yelpName", "yelpAddress", "yelpPhone", "bing", "apple", "facebook"]);
+const PAID_ONLINE_PRESENCE_METRIC_IDS = new Set(["yelpPresence", "yelpName", "yelpAddress", "yelpPhone"]);
 
 function isFreePlacesIssue(issue) {
   if (!issue?.id) return true;
@@ -192,13 +180,13 @@ function isPaidLegacyIssue(issue) {
   return combined.includes("freshness") || combined.includes("ai visibility") || combined.includes("yelp") || combined.includes("bing") || combined.includes("apple maps") || combined.includes("facebook");
 }
 
-function LockedReportSection({ onUnlock, compact = false, className = "" }) {
+function LockedReportSection({ onUnlock }) {
   return (
-    <div className={`rounded-xl border border-brand/30 bg-brand-soft p-4 shadow-soft ${className}`}>
+    <div className="rounded-xl border border-brand/30 bg-brand-soft p-5 shadow-soft">
       <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <div className="text-xs font-black uppercase tracking-[0.14em] text-brand">Locked full scan</div>
-          <h4 className={`${compact ? "mt-1 text-lg" : "mt-2 text-2xl"} font-black text-ink`}>Unlock the full scan</h4>
+          <h4 className="mt-2 text-2xl font-black text-ink">Unlock the full scan</h4>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
             Get secondary listings, content freshness, and the complete cross-source action plan.
           </p>
@@ -211,7 +199,7 @@ function LockedReportSection({ onUnlock, compact = false, className = "" }) {
   );
 }
 
-function PlacesHealthSection({ breakdown, fullReportUnlocked, onUnlock }) {
+function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
   const [checkView, setCheckView] = useState("all");
   const showAllChecks = checkView === "all";
   const visibleCategories = fullReportUnlocked ? breakdown.categories : breakdown.categories.map(toFreePlacesCategory).filter(Boolean);
@@ -234,8 +222,8 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked, onUnlock }) {
             Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.
           </p>
           {breakdown.hasScanError && (
-            <p className="mt-3 rounded-md border border-signal-amber/40 bg-signal-amber/10 p-3 text-sm font-bold leading-6 text-slate-700">
-              Provisional score: {breakdown.scanErrors.join(", ")} could not run this time.
+            <p className="mt-3 text-xs font-bold leading-5 text-slate-500">
+              {breakdown.scanErrors.join(", ")} could not run this time. The score above reflects every other completed check.
             </p>
           )}
         </div>
@@ -275,7 +263,6 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked, onUnlock }) {
             No issue checks were found in the detailed scan. Use “Show all checks” to review every available and unavailable check.
           </div>
         )}
-        {!fullReportUnlocked && <LockedReportSection onUnlock={onUnlock} className="lg:col-span-2" />}
       </div>
 
       {visiblePrioritizedIssues.length > 0 && (
@@ -284,11 +271,6 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked, onUnlock }) {
           <div className="mt-3 grid gap-3">
             {visiblePrioritizedIssues.slice(0, 5).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
           </div>
-          {!fullReportUnlocked && (
-            <div className="mt-4 border-t border-line pt-4">
-              <LockedReportSection onUnlock={onUnlock} compact />
-            </div>
-          )}
         </div>
       )}
     </section>
@@ -366,8 +348,8 @@ function PriorityIssueBox({ issue }) {
     </div>
   );
 }
-function BusinessHealthSection({ healthScore, fullReportUnlocked, onUnlock }) {
-  if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} fullReportUnlocked={fullReportUnlocked} onUnlock={onUnlock} />;
+function BusinessHealthSection({ healthScore, fullReportUnlocked }) {
+  if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} fullReportUnlocked={fullReportUnlocked} />;
 
   const visibleCategories = fullReportUnlocked ? healthScore.categories : healthScore.categories.filter((category) => !isPaidLegacyCategory(category));
   const freeIssues = (healthScore.prioritizedIssues || []).filter((issue) => fullReportUnlocked || !isPaidLegacyIssue(issue));
@@ -399,7 +381,6 @@ function BusinessHealthSection({ healthScore, fullReportUnlocked, onUnlock }) {
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {visibleCategories.map((category) => <HealthCategoryCard key={category.key} category={category} />)}
-        {!fullReportUnlocked && <LockedReportSection onUnlock={onUnlock} className="lg:col-span-2" />}
       </div>
 
       {freeIssues.length > 0 && (
@@ -420,11 +401,6 @@ function BusinessHealthSection({ healthScore, fullReportUnlocked, onUnlock }) {
               </div>
             ))}
           </div>
-          {!fullReportUnlocked && (
-            <div className="mt-4 border-t border-line pt-4">
-              <LockedReportSection onUnlock={onUnlock} compact />
-            </div>
-          )}
         </div>
       )}
     </section>

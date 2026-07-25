@@ -15,10 +15,7 @@ export const OnlinePresenceProvider = {
       status: "measured",
       sources: {
         websiteNap: websiteNapSignal,
-        yelp: yelpSignal,
-        bing: pendingSignal("Bing local presence is pending; this scanner does not fetch Bing yet."),
-        apple: pendingSignal("Apple Maps presence is pending; this scanner does not fetch Apple Maps yet."),
-        facebook: pendingSignal("Facebook business-page presence is pending; this scanner does not fetch Facebook yet.")
+        yelp: yelpSignal
       }
     };
   }
@@ -281,10 +278,6 @@ function yelpPhone(value) {
 
 function sanitizeYelpValue(value, maxLength) {
   return String(value || "").slice(0, maxLength);
-}
-
-function pendingSignal(reason) {
-  return { status: "pending", value: null, reason };
 }
 
 function skippedYelp(reason) {

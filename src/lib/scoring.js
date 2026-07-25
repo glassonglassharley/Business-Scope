@@ -180,15 +180,6 @@ function scoreOnlinePresence(onlinePresence, siteDead = false) {
       good: "The Yelp phone number matches the Google listing.",
       low: "The Yelp phone number conflicts with Google.",
       unavailable: yelp.reason || "Yelp phone consistency was not confirmed; this stays neutral."
-    }),
-    numberMetric("bing", "Bing local presence", null, null, {
-      unavailable: sources.bing?.reason || "Bing local presence is pending and excluded from this score."
-    }),
-    numberMetric("apple", "Apple Maps presence", null, null, {
-      unavailable: sources.apple?.reason || "Apple Maps presence is pending and excluded from this score."
-    }),
-    numberMetric("facebook", "Facebook page presence", null, null, {
-      unavailable: sources.facebook?.reason || "Facebook presence is pending and excluded from this score."
     })
   ];
 

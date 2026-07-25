@@ -139,7 +139,9 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   }
 
   async function scanWebsiteForPlace(place) {
-    if (!place?.website) return unavailableWebsiteAudit(place, "No public website was found for this listing.");
+    // No listed website is a normal, measurable outcome (WebsiteProvider scores
+    // it as a real 0, not an unknown) — always call the API so Technical Health
+    // stays part of the free report instead of falling back to "unavailable".
     try {
       const response = await fetch("/api/website/audit", {
         method: "POST",
