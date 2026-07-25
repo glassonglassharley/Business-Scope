@@ -1,22 +1,39 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { bandForScore } from "@/lib/scoring";
 import { BRAND } from "@/lib/brand";
-import {
-  SAMPLE_AVAILABLE_WEIGHT,
-  SAMPLE_BUSINESS,
-  SAMPLE_CATEGORIES,
-  SAMPLE_PRIORITIZED_ISSUES,
-  SAMPLE_SCORE_TOTAL
-} from "@/lib/sampleReport";
+import { SAMPLE_REPORTS } from "@/lib/sampleReport";
+
+const STORAGE_KEY = "streetSignal.sampleReportIndex.v1";
+
+function selectSampleReport() {
+  const lastIndex = Number(window.sessionStorage.getItem(STORAGE_KEY));
+  const availableIndexes = SAMPLE_REPORTS.map((_, index) => index).filter((index) => index !== lastIndex);
+  const nextIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)] ?? 0;
+  window.sessionStorage.setItem(STORAGE_KEY, String(nextIndex));
+  return SAMPLE_REPORTS[nextIndex];
+}
 
 /**
  * Mirrors ReportView.jsx's structure, category names, and states so a
  * prospect sees the same report language here as on their first real scan.
  * Shows the full report, no paywall — every category is illustrated,
- * including the ones a real free scan keeps locked.
+ * including the ones a real free scan keeps locked. Picks a different
+ * example business on each visit (excluding the last one shown, via
+ * sessionStorage), matching the rotation already used for the homepage's
+ * diagnostic preview and problem cards.
  */
 export function SampleReport({ checkedDate }) {
-  const band = bandForScore(SAMPLE_SCORE_TOTAL);
-  const weakestCategory = [...SAMPLE_CATEGORIES].sort((a, b) => a.score - b.score)[0];
+  const [report, setReport] = useState(SAMPLE_REPORTS[0]);
+
+  useEffect(() => {
+    queueMicrotask(() => setReport(selectSampleReport()));
+  }, []);
+
+  const { business, scoreTotal, availableWeight, categories, prioritizedIssues } = report;
+  const band = bandForScore(scoreTotal);
+  const weakestCategory = [...categories].sort((a, b) => a.score - b.score)[0];
   // The shared band verdict is score-only and identical for any 71-100 -
   // it doesn't know this sample has one genuinely weak category. Name it
   // specifically here instead, falling back to the generic verdict if the
@@ -31,21 +48,21 @@ export function SampleReport({ checkedDate }) {
       <header className="grid gap-5 border-b border-line p-5 sm:p-7 md:grid-cols-[1fr_240px] md:items-center">
         <div>
           <p className="eyebrow">Sample report · Fictional business</p>
-          <h2 className="mt-2 break-words text-3xl font-black tracking-tight text-ink sm:text-4xl">{SAMPLE_BUSINESS.businessName}</h2>
+          <h2 className="mt-2 break-words text-3xl font-black tracking-tight text-ink sm:text-4xl">{business.businessName}</h2>
           <p className="mt-2 text-base font-semibold text-slate-600">
-            {SAMPLE_BUSINESS.industry} | {SAMPLE_BUSINESS.city} | Checked {checkedDate}
+            {business.industry} | {business.city} | Checked {checkedDate}
           </p>
           <p className={`mt-5 max-w-3xl text-lg font-black sm:text-xl ${band.textClass}`}>{verdictLine}</p>
         </div>
         <div className={`w-full rounded-lg border-2 p-5 text-center sm:w-auto ${band.panelClass}`}>
           <div className="text-xs font-black uppercase tracking-[0.16em]">{BRAND}</div>
-          <div className="mt-2 text-6xl font-black leading-none sm:text-7xl">{SAMPLE_SCORE_TOTAL}</div>
+          <div className="mt-2 text-6xl font-black leading-none sm:text-7xl">{scoreTotal}</div>
           <div className="mt-1 text-sm font-black">out of 100 | {band.label}</div>
         </div>
       </header>
 
       <section className="grid border-b border-line md:grid-cols-3">
-        <Insight label="Most urgent gap" value={SAMPLE_PRIORITIZED_ISSUES[0]?.title ?? "No major gap found"} />
+        <Insight label="Most urgent gap" value={prioritizedIssues[0]?.title ?? "No major gap found"} />
         <Insight label="Weakest category" value={weakestCategory.label} />
         <Insight label="Likely customer impact" value="Lost calls and quotes" />
       </section>
@@ -59,7 +76,7 @@ export function SampleReport({ checkedDate }) {
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {SAMPLE_PRIORITIZED_ISSUES.slice(0, 2).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
+            {prioritizedIssues.slice(0, 2).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
           </div>
         </div>
       </section>
@@ -75,19 +92,19 @@ export function SampleReport({ checkedDate }) {
           </div>
           <div className="rounded-lg border border-line bg-nested-surface p-4 text-left sm:text-right">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Overall score</div>
-            <div className="mt-1 text-3xl font-black text-ink">{SAMPLE_SCORE_TOTAL}/100</div>
-            <div className="mt-1 text-xs font-bold text-slate-500">Checks completed: {SAMPLE_AVAILABLE_WEIGHT}%</div>
+            <div className="mt-1 text-3xl font-black text-ink">{scoreTotal}/100</div>
+            <div className="mt-1 text-xs font-bold text-slate-500">Checks completed: {availableWeight}%</div>
           </div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {SAMPLE_CATEGORIES.map((category) => <SampleCategoryCard key={category.key} category={category} />)}
+          {categories.map((category) => <SampleCategoryCard key={category.key} category={category} />)}
         </div>
 
         <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
           <h4 className="font-black text-ink">Prioritized next fixes</h4>
           <div className="mt-3 grid gap-3">
-            {SAMPLE_PRIORITIZED_ISSUES.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
+            {prioritizedIssues.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
           </div>
         </div>
       </section>
