@@ -1,6 +1,36 @@
-# State Secretary of State (SoS) Business-Entity Data — Phase 1 Feasibility Census
+# State Secretary of State (SoS) Business-Entity Data — Feasibility Census + Build Status
 
-**Status:** Research only. No connectors have been built. Nothing in this document has been wired into the app.
+**Status:** Phase 1 census complete. Phase 2 Tier 1 (real APIs) complete — Colorado is a live, tested connector. No Tier 2 (scrape-tier) connector has been built. Nothing in this document has been wired into scoring or any report.
+
+## Phase 2 — Tier 1 (API) build status
+
+Only connectors backed by a real, official, government-published API qualify for Tier 1. A re-scan of the 8 unresolved + 22 scrapable states from Phase 1 turned up three more real government APIs beyond Colorado — but two of the three have a data-completeness problem serious enough that they are **not built**, not "built with caveats": each publishes an **active-entities-only** dataset, meaning a real, dissolved/inactive business simply never appears in it. Querying one for a real-but-inactive entity would return `not_found`, indistinguishable from "never existed" — that's exactly the ambiguity this project exists to avoid, so it's a hard blocker, not a nice-to-have field gap.
+
+| State | API found? | Built? | Why |
+|---|---|---|---|
+| **Colorado** | Yes — `data.colorado.gov` Socrata dataset ("Business Entities in Colorado") | **Yes — live** | Full field match (name, status, entity type, registered agent, filing date) and includes inactive/dissolved entities, so `not_found` is unambiguous. `src/lib/sos/colorado.js`. |
+| New York | Yes — `data.ny.gov` Socrata dataset "Active Corporations: Beginning 1800" (confirmed via live query + column metadata: has a genuine Registered Agent field, matching most of our shape) | No | Dataset name says it outright: **active only**. Its own metadata states "does not include information on inactive corporations." A dissolved NY corporation would silently read as `not_found`. Would need a second complementary dataset (an inactive/historical entities table, if NY publishes one) before this is safe to build. |
+| Oregon | Yes — `data.oregon.gov` "Active Businesses - ALL" | No | Same active-only problem as New York (the dataset name says so directly), and no registered-agent field. |
+| Pennsylvania | Yes — `data.pa.gov` "Registered Businesses in PA... Department of State" | No | Confirmed via column metadata: **no status field and no registered-agent field at all** (only officer name, which is a different, real thing — using it as a stand-in for registered agent would be a factual misrepresentation, not just a gap). The dataset's own description also discloses it "shows more active businesses than currently exist" due to statutory constraints — a state-acknowledged staleness problem on top of the missing fields. |
+| Texas, Illinois, Utah, North Carolina, Michigan, Washington | Searched, no free official API found | No | Texas's real registry (SOSDirect) is a paid subscription with no free API — explicitly out of scope per instruction. The others: only third-party paid resellers (Apify scrapers, Cobalt Intelligence, etc.) turned up, which is itself evidence there's no easy official API, not a lead worth chasing further this pass. |
+
+**Everything else** (the remaining scrapable/blocked/unresolved states from Phase 1) was not re-searched for an API this pass — the above covers the states with the strongest a priori signal (existing state open-data portals). A more exhaustive per-state open-data search is a reasonable follow-up but wasn't done here.
+
+### Core architecture (built now, ahead of any Tier 2 state, so adding states later is mostly config)
+
+- **`src/lib/sos/{state}.js`** — one file per state connector, each exporting `lookup(name, state)` and a `canary` (a known-real, stable entity used for health checks).
+- **`src/lib/sos/index.js`** — the registry/dispatcher. `lookup(name, state)` routes to the matching connector, or returns `{ outcome: "unavailable_state" }` immediately for any state with no connector — before any network attempt, so an unbuilt state can never look like a queried-and-empty one.
+- **Four honest outcomes, never a fake success:**
+  - `found` — normal result.
+  - `not_found` — queried successfully, no match.
+  - `source_error` — a connector exists but couldn't be trusted this time (network/HTTP failure, or the response no longer matches the schema the connector was built against — e.g. Socrata renames every column). This is the mechanism that turns "the scraper quietly started returning garbage" into a visible, distinct signal instead of a silent wrong answer.
+  - `unavailable_state` — no connector built for this state.
+- **`scripts/sos-healthcheck.mjs`** — runs every connector's canary query and prints a `state | last-good | status` table, exit code 1 if anything currently fails. Maintains `sos-health-log.json` (committed) so a currently-broken connector still shows the last time it was known to actually work, instead of losing that history the moment it breaks. Colorado's canary is Google LLC (Delaware-formed, foreign-registered in CO since 2003 — about as stable a real-world fixture as exists).
+- **Tests** (`tests/sos.test.mjs`, 15 total) cover: real data for a known-real entity (live network call, no mocking), case-insensitivity, clean `not_found` for a fabricated name and an empty name, `unavailable_state` for every unbuilt state (with a network-call assertion proving it never even tries), and — the self-detection proof — four separate simulated failure modes (schema drift, non-array response, non-2xx HTTP, thrown network error) all correctly resolving to `source_error` rather than `not_found` or a crash, plus confirming a genuinely-empty-but-well-formed response still resolves to `not_found`.
+
+---
+
+# Phase 1 Feasibility Census (original)
 
 ## Methodology (read this before trusting any row)
 
