@@ -27,7 +27,7 @@ export const SAMPLE_CATEGORIES = [
     status: "measured",
     score: 100,
     metrics: [
-      { id: "address", label: "Address present", score: 100, note: "Customers can confirm the location before visiting." },
+      { id: "address", label: "Address present", score: 100, note: "Customers can confirm the location." },
       { id: "phone", label: "Phone present", score: 100, note: "Customers can call directly from the listing." },
       { id: "hours", label: "Hours present", score: 100, note: "Customers can tell when the salon is open." }
     ]
@@ -39,9 +39,9 @@ export const SAMPLE_CATEGORIES = [
     score: 60,
     metrics: [
       { id: "website", label: "Website linked", score: 100, note: "A website link gives customers somewhere to verify details." },
-      { id: "category", label: "Category set", score: 100, note: "Google category and service types are set clearly." },
+      { id: "category", label: "Category set", score: 100, note: "Category and service types are set clearly." },
       { id: "claimed", label: "Claimed / verified", score: 0, note: "The listing did not appear claimed or verified from the available data." },
-      { id: "photos", label: "Photos available", score: 40, note: "Newest customer-facing photos are more than eight months old, so the profile can look less current than it is." }
+      { id: "photos", label: "Photos available", score: 40, note: "Newest photos are over eight months old, so the profile can look dated." }
     ]
   },
   {
@@ -67,7 +67,7 @@ export const SAMPLE_CATEGORIES = [
       { id: "copyrightYear", label: "Copyright year", score: 60, note: "The homepage copyright year is a little dated, but not a major concern by itself." },
       { id: "photoVolume", label: "Google photo volume", score: 85, note: "Google has enough photos to make the business feel active and real." },
       { id: "hoursSpecificity", label: "Hours specificity", score: 100, note: "Google shows a specific weekly schedule, which helps customers know when to act." },
-      { id: "pageDate", label: "Updated date signal", score: null, note: "No clear page update date was found; this stays neutral because many current sites do not show one." },
+      { id: "pageDate", label: "Updated date signal", score: null, note: "No clear page update date was found; this stays neutral." },
       { id: "photoRecency", label: "Google photo recency", score: null, note: "Google Places did not provide photo dates, so photo recency is pending rather than guessed." },
       { id: "posts", label: "Google posts or updates", score: null, note: "Google post/update activity is pending because this scan does not fetch that data yet." },
       { id: "qaActivity", label: "Q&A activity", score: null, note: "Q&A activity is pending because this scan does not fetch that data yet." },
@@ -80,8 +80,8 @@ export const SAMPLE_CATEGORIES = [
     status: "measured",
     score: 88,
     metrics: [
-      { id: "rating", label: "Average rating", score: 92, note: "A strong average rating helps customers trust the business before they call." },
-      { id: "reviews", label: "Review count", score: 84, note: "Review volume is solid, with room to build further proof." }
+      { id: "rating", label: "Average rating", score: 92, note: "A strong rating helps customers trust the business before they call." },
+      { id: "reviews", label: "Review count", score: 84, note: "Review volume is solid, with room to grow." }
     ]
   },
   {
@@ -103,8 +103,8 @@ export const SAMPLE_CATEGORIES = [
     status: "measured",
     score: 57,
     metrics: [
-      { id: "performance", label: "Mobile performance", score: 22, note: "The mobile homepage loads slowly enough that impatient visitors may leave before it finishes." },
-      { id: "description", label: "Meta description", score: 0, note: "The homepage is missing a meta description, so search results show weaker preview text." },
+      { id: "performance", label: "Mobile performance", score: 22, note: "The mobile homepage loads slowly enough that visitors may leave before it finishes." },
+      { id: "description", label: "Meta description", score: 0, note: "Missing a meta description, so search results show weaker preview text." },
       { id: "https", label: "Served over HTTPS", score: 100, note: "Customers land on a secure HTTPS version of the site." },
       { id: "viewport", label: "Mobile viewport", score: 100, note: "Mobile viewport markup helps the site render properly on phones." }
     ]
