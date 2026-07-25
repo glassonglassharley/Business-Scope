@@ -196,8 +196,19 @@ export default function Home() {
                 {ownerMode && <button className={navClass(view === "new")} onClick={() => setView("new")}>New Checkup</button>}
                 {ownerMode && <button className={navClass(view === "report")} disabled={!selectedAudit} onClick={() => setView("report")}>Saved Report</button>}
               </nav>
-              <button className="secondary-button lg:hidden" type="button" aria-expanded={mobileMenuOpen} aria-controls="mobile-menu" onClick={() => setMobileMenuOpen((open) => !open)}>
-                Menu
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-ink transition hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/20 lg:hidden"
+                type="button"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu"
+                aria-label="Menu"
+                onClick={() => setMobileMenuOpen((open) => !open)}
+              >
+                <svg width="22" height="16" viewBox="0 0 22 16" fill="none" aria-hidden="true">
+                  <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="0" y1="8" x2="22" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="0" y1="15" x2="22" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </button>
             </>
           )}
