@@ -175,8 +175,7 @@ export default function Home() {
     ["Sample Report", "/sample-report"],
     ["Cleanup", "/cleanup"],
     ["What We Check", "/what-we-check"],
-    ["FAQ", "/faq"],
-    ["Run a Checkup", "#business-search"]
+    ["FAQ", "/faq"]
   ];
 
   return (
