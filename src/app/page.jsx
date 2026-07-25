@@ -20,11 +20,31 @@ const defaultSettings = {
   preparerName: BRAND
 };
 
-const problemCards = [
-  { title: "Conflicting business hours", body: "Conflicting hours can cause customers to arrive when the business is closed.", status: "High", picture: "clock" },
-  { title: "Broken booking or ordering links", body: "A broken booking link can stop an interested customer at the final step.", status: "Critical", picture: "link" },
-  { title: "Missing services or categories", body: "Missing services can keep the business from appearing for the searches customers actually use.", status: "Medium", picture: "services" },
-  { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High", picture: "contact" }
+const problemCardSets = [
+  [
+    { title: "Conflicting business hours", body: "Conflicting hours can cause customers to arrive when the business is closed.", status: "High", picture: "clock" },
+    { title: "Broken booking or ordering links", body: "A broken booking link can stop an interested customer at the final step.", status: "Critical", picture: "link" },
+    { title: "Missing services or categories", body: "Missing services can keep the business from appearing for the searches customers actually use.", status: "Medium", picture: "services" },
+    { title: "Inconsistent phone, address, or website details", body: "Conflicting contact details make customers hesitate, call the wrong number, or choose a competitor.", status: "High", picture: "contact" }
+  ],
+  [
+    { title: "Old address still showing", body: "Customers can drive to the wrong place when old suite, address, or service-area details remain public.", status: "Critical", picture: "contact" },
+    { title: "Closed-day calls still coming in", body: "Outdated open-now signals make people call or visit when nobody is available to help.", status: "High", picture: "clock" },
+    { title: "Service pages do not match listings", body: "Customers may skip the business when the listing and website describe different services.", status: "Medium", picture: "services" },
+    { title: "Quote request link is hidden", body: "A hard-to-find action path can make ready buyers give up before asking for help.", status: "High", picture: "link" }
+  ],
+  [
+    { title: "Menu or price details conflict", body: "Mismatched menu, service, or price details can make customers question what is actually available.", status: "High", picture: "services" },
+    { title: "Website contact form fails", body: "A broken form can lose high-intent customers who do not want to call.", status: "Critical", picture: "link" },
+    { title: "Holiday hours are missing", body: "Customers hesitate when special hours are not clear around holidays or seasonal changes.", status: "Medium", picture: "clock" },
+    { title: "Wrong phone number on a directory", body: "One bad directory listing can send calls to a dead line or a competitor.", status: "High", picture: "contact" }
+  ],
+  [
+    { title: "Mobile booking flow breaks", body: "Customers on phones can hit an error right when they are ready to schedule.", status: "Critical", picture: "link" },
+    { title: "Primary category is too vague", body: "A weak category can keep the business out of the searches customers actually use.", status: "Medium", picture: "services" },
+    { title: "Phone and website disagree", body: "Conflicting contact details make customers unsure which source to trust.", status: "High", picture: "contact" },
+    { title: "Hours look incomplete", body: "Partial hours can make customers wonder whether the business is open, closed, or still operating.", status: "High", picture: "clock" }
+  ]
 ];
 
 const howItWorks = [
@@ -292,6 +312,12 @@ function SignalRow({ label, status, body }) {
 }
 
 function ProblemSection() {
+  const [cards, setCards] = useState(problemCardSets[0]);
+
+  useEffect(() => {
+    queueMicrotask(() => setCards(selectProblemCardSet()));
+  }, []);
+
   return (
     <section className="section-grid" id="problem">
       <div>
@@ -299,10 +325,19 @@ function ProblemSection() {
         <h2>Customers cannot act on information they cannot trust.</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {problemCards.map((card) => <ProblemCard key={card.title} {...card} />)}
+        {cards.map((card) => <ProblemCard key={card.title} {...card} />)}
       </div>
     </section>
   );
+}
+
+function selectProblemCardSet() {
+  const storageKey = "streetSignal.problemCardSetIndex.v1";
+  const lastIndex = Number(window.sessionStorage.getItem(storageKey));
+  const availableIndexes = problemCardSets.map((_, index) => index).filter((index) => index !== lastIndex);
+  const nextIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)] ?? 0;
+  window.sessionStorage.setItem(storageKey, String(nextIndex));
+  return problemCardSets[nextIndex];
 }
 
 function ProblemCard({ title, body, status, picture }) {
