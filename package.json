@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test tests/publicLeak.test.mjs",
+    "test": "node --test tests/publicLeak.test.mjs tests/sos.test.mjs",
     "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
