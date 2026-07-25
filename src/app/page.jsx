@@ -243,7 +243,7 @@ function PublicHome({ onAuditComplete }) {
     <div className="grid gap-8">
       <section className="hero-grid">
         <div className="hero-copy">
-          <h1>Find the online mistakes costing you calls, visits, and bookings.</h1>
+          <h1>Find the online mistakes costing you calls, visits, bookings, and clients.</h1>
           <BusinessSearch onAuditComplete={onAuditComplete} variant="compact" />
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
