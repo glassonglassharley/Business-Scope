@@ -253,9 +253,10 @@ function PublicHome({ onAuditComplete }) {
   return (
     <div className="grid gap-8">
       <section className="hero-grid">
-        <div className="hero-copy">
+        <div className="hero-copy lg:relative lg:z-0 lg:self-stretch lg:overflow-hidden">
           <h1>Find the online mistakes costing you calls, visits, bookings, and clients.</h1>
           <BusinessSearch onAuditComplete={onAuditComplete} variant="compact" />
+          <CitySkyline />
         </div>
         <DiagnosticPreview checkedDate={checkedDate} />
       </section>
@@ -266,6 +267,81 @@ function PublicHome({ onAuditComplete }) {
       <CommercialPath />
       <SiteFooter />
     </div>
+  );
+}
+
+const SKYLINE_BUILDINGS = [
+  { x: 4, w: 34, h: 82, tier: false, antenna: false },
+  { x: 42, w: 46, h: 58, tier: true, antenna: false },
+  { x: 92, w: 28, h: 108, tier: false, antenna: true },
+  { x: 124, w: 50, h: 68, tier: true, antenna: false },
+  { x: 178, w: 34, h: 92, tier: false, antenna: false },
+  { x: 216, w: 58, h: 52, tier: true, antenna: false },
+  { x: 278, w: 30, h: 118, tier: false, antenna: true },
+  { x: 312, w: 44, h: 72, tier: true, antenna: false },
+  { x: 360, w: 28, h: 96, tier: false, antenna: false },
+  { x: 392, w: 50, h: 62, tier: true, antenna: false },
+  { x: 446, w: 32, h: 112, tier: false, antenna: true },
+  { x: 482, w: 44, h: 78, tier: true, antenna: false },
+  { x: 530, w: 30, h: 58, tier: false, antenna: false },
+  { x: 564, w: 32, h: 88, tier: false, antenna: false }
+];
+const SKYLINE_BASELINE = 140;
+
+function CitySkyline() {
+  return (
+    <svg
+      className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 hidden h-28 w-full lg:block"
+      viewBox="0 0 600 140"
+      preserveAspectRatio="xMidYMax meet"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <g className="text-ink/5" fill="currentColor">
+        <rect x="0" y="95" width="64" height="45" />
+        <rect x="70" y="80" width="54" height="60" />
+        <rect x="132" y="100" width="70" height="40" />
+        <rect x="210" y="85" width="56" height="55" />
+        <rect x="278" y="102" width="66" height="38" />
+        <rect x="352" y="88" width="52" height="52" />
+        <rect x="412" y="98" width="70" height="42" />
+        <rect x="490" y="82" width="56" height="58" />
+        <rect x="554" y="102" width="46" height="38" />
+      </g>
+      {SKYLINE_BUILDINGS.map((building, buildingIndex) => (
+        <SkylineBuilding key={buildingIndex} building={building} buildingIndex={buildingIndex} />
+      ))}
+    </svg>
+  );
+}
+
+function SkylineBuilding({ building, buildingIndex }) {
+  const { x, w, h, tier, antenna } = building;
+  const roofY = SKYLINE_BASELINE - h;
+  const cols = Math.max(1, Math.floor((w - 6) / 8));
+  const rows = Math.max(1, Math.floor((h - 6) / 10));
+  const windows = [];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      if ((col + row + buildingIndex) % 4 === 0) continue;
+      windows.push(<rect key={`${row}-${col}`} x={x + 3 + col * 8} y={roofY + 3 + row * 10} width="5" height="6" />);
+    }
+  }
+
+  return (
+    <>
+      <g className="text-ink/10" fill="currentColor">
+        <rect x={x} y={roofY} width={w} height={h} />
+        {tier && <rect x={x + w * 0.22} y={roofY - 14} width={w * 0.56} height="14" />}
+        {antenna && (
+          <>
+            <rect x={x + w / 2 - 1} y={roofY - 20} width="2" height="20" />
+            <circle cx={x + w / 2} cy={roofY - 20} r="2.5" />
+          </>
+        )}
+      </g>
+      <g className="text-ink/25" fill="currentColor">{windows}</g>
+    </>
   );
 }
 
