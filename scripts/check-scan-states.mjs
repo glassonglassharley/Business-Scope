@@ -1,16 +1,10 @@
-import { readFile } from "node:fs/promises";
-
-const scoringConfigSource = await readFile(new URL("../src/lib/scoringConfig.js", import.meta.url), "utf8");
-const ratingScoreSource = await readFile(new URL("../src/lib/ratingScore.js", import.meta.url), "utf8");
-const scoringConfigUrl = `data:text/javascript,${encodeURIComponent(scoringConfigSource)}`;
-const ratingScoreUrl = `data:text/javascript,${encodeURIComponent(ratingScoreSource)}`;
-const scoringSource = await readFile(new URL("../src/lib/scoring.js", import.meta.url), "utf8");
-const scoringModule = await import(`data:text/javascript,${encodeURIComponent(
-  scoringSource
-    .replace('"@/lib/scoringConfig"', JSON.stringify(scoringConfigUrl))
-    .replace('"@/lib/ratingScore"', JSON.stringify(ratingScoreUrl))
-)}`);
-const { calculateBusinessHealthScore } = scoringModule;
+// scoring.js uses relative imports (./ratingScore.js, ./scoringConfig.js —
+// both leaf modules with no further imports of their own) specifically so
+// it's importable from plain Node scripts without alias resolution; see the
+// comment at the top of that file. A normal relative import here resolves
+// the whole chain natively — no @/ aliases exist anywhere in this chain to
+// work around.
+import { calculateBusinessHealthScore } from "../src/lib/scoring.js";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
