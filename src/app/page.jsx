@@ -266,7 +266,7 @@ function DiagnosticPreview({ checkedDate }) {
   }, []);
 
   return (
-    <aside className="diagnostic-preview" aria-label="Compact diagnostic result preview">
+    <aside className="diagnostic-preview hidden lg:block" aria-label="Compact diagnostic result preview">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Diagnostic preview</p>
