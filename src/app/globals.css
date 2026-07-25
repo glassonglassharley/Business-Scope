@@ -281,6 +281,26 @@ a {
     @apply mt-2 h-2 w-2 shrink-0 rounded-full bg-brand;
   }
 
+  .check-group-impact {
+    @apply mt-2 text-sm font-bold leading-6 text-ink;
+  }
+
+  .example-issues {
+    @apply mt-4 border-t border-line pt-4;
+  }
+
+  .example-issues-label {
+    @apply text-xs font-black uppercase tracking-[0.12em] text-slate-500;
+  }
+
+  .check-group .example-issues ul {
+    @apply mt-2 grid gap-1.5 text-xs leading-5 text-slate-600;
+  }
+
+  .check-group .example-issues li::before {
+    @apply h-1.5 w-1.5 bg-slate-400;
+  }
+
   .sample-report {
     @apply bg-ink text-white;
   }
