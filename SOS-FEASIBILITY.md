@@ -16,6 +16,28 @@ Only connectors backed by a real, official, government-published API qualify for
 
 **Everything else** (the remaining scrapable/blocked/unresolved states from Phase 1) was not re-searched for an API this pass — the above covers the states with the strongest a priori signal (existing state open-data portals). A more exhaustive per-state open-data search is a reasonable follow-up but wasn't done here.
 
+### Louisiana deep-dive (scoped only — not built)
+
+Louisiana was flagged Blocked in Phase 1 on robots.txt alone. This pass verified that conclusion independently and separately evaluated the state's official paid API, per instruction. **Not built either way this pass** — reported for review.
+
+**(a) Free portal — `coraweb.sos.la.gov` — confirmed Blocked, three independent signals:**
+1. **robots.txt** (from Phase 1, re-confirmed): explicitly disallows `/commercialsearch/CommercialSearch.aspx` (the exact search page) and all query-string URLs (`/*?*`).
+2. **Live reCAPTCHA** (confirmed by fetching the actual search page): the page footer reads *"This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply."* This directly answers the "confirm you are a person" question — it is a real Google reCAPTCHA challenge, not a static, unverified checkbox. This alone blocks unattended automation.
+3. **Search Disclaimer**: a "Search Disclaimer" link exists on the page, but it's a JS-triggered modal (`href="#"`) whose text couldn't be extracted via fetch — doesn't change the conclusion given (1) and (2) are each independently sufficient.
+
+**(b) Official Commercial API — `commercialapi.sos.la.gov` — real, well-documented, honest, but not free:**
+Read the full Commercial API Implementation Guide (`static.sos.la.gov/COAPI/Commercial_API_Guide.pdf`) directly, plus the governing regulation (La. Admin. Code tit. 19, § V-702).
+
+- **Cost: $500/year, non-refundable, renewable subscription** for a "Live" token that returns real data. A "Test" token exists and is free, but only returns fixed fake test data — not usable for production lookups.
+- **Registration**: requires a Department single sign-on account with a verified email, enrolled through `subscriptions.sos.la.gov`. Enrollment is explicitly non-transferable.
+- **Rate limit**: 18 calls/minute, then `AccessDenied` until the next minute.
+- **Format**: REST, JSON.
+- **Endpoints**: `CommercialSearch` (by entity name or officer/agent name, up to 1,000 results) and `CommercialLookup` (by entity number, returns full detail).
+- **Fields — a strong match for our target shape, arguably richer than Colorado's**: `CommercialLookup` → `CharterDetails` includes `CharterName` (legalName), `CharterStatusDescription` + `CharterSubStatusDescription` (status), `BusinessType`/`CharterCategory` (entityType), `RegistrationDate`/`FileDate` (filingDate), and a full `Agents[]` array with names and addresses (registeredAgent) — plus `Officers[]`, `PreviousNames[]`, `Mergers[]`, and `Amendments[]`, none of which our current shape uses but all of which are real and available.
+- **Includes inactive/dissolved entities with explicit status** — confirmed directly from the guide's own sample response, which shows a real example record with `"EntityStatus": "I - INACTIVE"`. This is the exact honesty property that disqualified New York and Oregon last pass: Louisiana's API does **not** have that gap.
+
+**Conclusion:** Louisiana is **(c) Blocked** for the free path (confirmed, not just carried over from Phase 1), and **(a) a real, honest, low-maintenance API exists but costs $500/year** plus an account with a verified email — a genuine build candidate if the cost is worth it, but a cost/access decision for you, not a technical blocker. Left unbuilt this pass per instruction either way.
+
 ### Core architecture (built now, ahead of any Tier 2 state, so adding states later is mostly config)
 
 - **`src/lib/sos/{state}.js`** — one file per state connector, each exporting `lookup(name, state)` and a `canary` (a known-real, stable entity used for health checks).
@@ -76,7 +98,7 @@ For each of the 50 states + DC, this pass checked:
 | Iowa | https://sos.iowa.gov/search/business/search.aspx | Web form | Scrapable | robots.txt permissive (blocks AI-training crawlers by user-agent — ClaudeBot, GPTBot, etc. — but allows general `search=yes` access; business-search path not disallowed). |
 | Kansas | https://www.sos.ks.gov/eforms/BusinessEntity/Search.aspx | Web form | **Blocked** | robots.txt **explicitly disallows this exact path**: `/eforms/BusinessEntity/Search.aspx`. |
 | Kentucky | https://sosbes.sos.ky.gov/BusSearchNProfile/search.aspx | Web form | Scrapable | robots.txt: no file found (404) = default allow. |
-| Louisiana | https://coraweb.sos.la.gov/CommercialSearch/CommercialSearch.aspx | Web form | **Blocked** | robots.txt **explicitly disallows the main search page** (`/commercialsearch/CommercialSearch.aspx`) and all query-string URLs (`/*?*`), which would block parameterized search requests generally. |
+| Louisiana | Free portal: https://coraweb.sos.la.gov/CommercialSearch/CommercialSearch.aspx — Paid API: https://commercialapi.sos.la.gov/ | Free portal blocked; paid REST/JSON API available | **Blocked (free) / Real paid API exists ($500/yr, not yet built)** | See "Louisiana deep-dive" below — free portal confirmed blocked by three independent signals (robots.txt, live reCAPTCHA, disallowed query strings); the official Commercial API is real, well-documented, and — unlike NY/OR — explicitly includes inactive/dissolved entities with status, so it has no honesty gap. Not built this pass (cost decision, not a technical one) — scoped only, per instruction. |
 | Maine | https://apps3.web.maine.gov/nei-sos-icrs/ICRS?MainPage=x | Web form | Scrapable | robots.txt is large (77 rules) but none reference `/nei-sos-icrs/` or ICRS. |
 | Maryland | https://egov.maryland.gov/BusinessExpress/EntitySearch | Web form | Scrapable | robots.txt: blanket disallow **except an explicit `Allow: /businessexpress/entitysearch`** — the target path is named directly as an exception. |
 | Massachusetts | https://corp.sec.state.ma.us/corpweb/CorpSearch/CorpSearch.aspx | Web form | Blocked | robots.txt: blanket `Disallow: /`, no exceptions. |
