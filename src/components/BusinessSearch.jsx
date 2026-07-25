@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 const DEFAULT_INDUSTRY = "Other Local Business";
 const EMPTY_FORM = { businessName: "", location: "" };
@@ -14,21 +14,12 @@ const PROGRESS_STEPS = [
 
 export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   const [form, setForm] = useState(EMPTY_FORM);
-  const [coordinates, setCoordinates] = useState("");
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
-  const [locationStatus, setLocationStatus] = useState("");
 
-  const query = useMemo(() => {
-    return [form.businessName.trim(), form.location.trim(), coordinates].filter(Boolean).join(" ");
-  }, [form.businessName, form.location, coordinates]);
-
-  const encodedQuery = encodeURIComponent(query);
-  const mapsUrl = query ? `https://www.google.com/maps/search/?api=1&query=${encodedQuery}` : "#";
-  const webUrl = query ? `https://www.google.com/search?q=${encodedQuery}` : "#";
   const busy = status === "searching" || status === "scanning";
   const hasSelection = Boolean(selectedCandidate);
 
@@ -40,7 +31,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   function validate() {
     const nextErrors = {};
     if (!form.businessName.trim()) nextErrors.businessName = "Enter the business name customers would search for.";
-    if (!form.location.trim() && !coordinates) nextErrors.location = "Add a city, neighborhood, or service area so StreetSignal can find the correct listing.";
+    if (!form.location.trim()) nextErrors.location = "Add a city, neighborhood, or service area so StreetSignal can find the correct listing.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setStatus("validation_error");
@@ -73,8 +64,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
         body: JSON.stringify({
           mode: "candidates",
           businessName: form.businessName.trim(),
-          city: form.location.trim(),
-          coordinates
+          city: form.location.trim()
         })
       });
       const body = await response.json().catch(() => ({}));
@@ -156,28 +146,6 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
     }
   }
 
-  function useCurrentLocation() {
-    setLocationStatus("");
-    if (!navigator.geolocation) {
-      setLocationStatus("Location is not supported in this browser — enter a city instead.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude.toFixed(5);
-        const lng = position.coords.longitude.toFixed(5);
-        setCoordinates(`${lat},${lng}`);
-        setErrors((current) => ({ ...current, location: "" }));
-      },
-      () => {
-        setCoordinates("");
-        setLocationStatus("Location denied — enter a city instead.");
-      },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 }
-    );
-  }
-
   return (
     <form id="business-search" className={variant === "compact" ? "diagnostic-form compact" : "diagnostic-form"} onSubmit={handleSubmit} noValidate>
       <div className={variant === "compact" ? "grid gap-3 md:grid-cols-2" : "grid gap-3 lg:grid-cols-[1.05fr_0.85fr_auto] lg:items-end"}>
@@ -218,28 +186,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
 
       {status === "scanning" && <ScanProgress />}
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            className="secondary-button min-h-11 px-4 py-2 text-sm"
-            type="button"
-            aria-describedby={locationStatus ? "location-status" : undefined}
-            onClick={useCurrentLocation}
-            disabled={busy}
-          >
-            Use current location
-          </button>
-          {locationStatus && <span id="location-status" className="text-xs font-semibold text-slate-500">{locationStatus}</span>}
-          {query && (
-            <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-600">
-              <a className="link" href={mapsUrl} target="_blank" rel="noopener noreferrer">Open this search in Google Maps</a>
-              <a className="link" href={webUrl} target="_blank" rel="noopener noreferrer">Search the web for this business</a>
-            </div>
-          )}
-        </div>
-
-        {message && <div className="min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">{message}</div>}
-      </div>
+      {message && <div className="mt-4 min-h-6 text-sm font-semibold leading-6 text-slate-700" role="status" aria-live="polite">{message}</div>}
 
       {(candidates.length > 0 || selectedCandidate) && (
         <div className="mt-4 rounded-xl border border-line bg-nested-surface p-3 sm:p-4">
@@ -276,7 +223,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
         </div>
       )}
 
-      {status === "not_found" && <StateNote tone="amber" title="Business not found" body="Try the full Google listing name, add the city, or use the current-area option. Service-area businesses may appear without a public address." />}
+      {status === "not_found" && <StateNote tone="amber" title="Business not found" body="Try the full Google listing name, add the city, or add a nearby neighborhood or service-area keyword. Service-area businesses may appear without a public address." />}
       {status === "rate_limited" && <StateNote tone="red" title="Scan temporarily limited" body="The lookup provider is rate-limiting requests. Please wait and retry; StreetSignal will not show raw provider errors to customers." />}
       {status === "failed" && <StateNote tone="red" title="Checkup could not run" body="The public lookup service did not complete. No listing access or password is required; please retry in a moment." />}
     </form>
