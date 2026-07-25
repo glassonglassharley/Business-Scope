@@ -40,6 +40,9 @@ export const WebsiteProvider = {
     const contentFreshness = ContentFreshnessProvider.fromExistingData({ html, place, websiteUrl: parsed.url.href });
     const nap = buildNapSignals(html, place);
     const onlinePresence = await OnlinePresenceProvider.fromExistingData({ place, websiteNap: nap });
+    const structuredData = htmlResult.ok
+      ? buildStructuredDataSignals(html, place)
+      : emptyStructuredDataSignals(htmlResult.error?.message || "Homepage HTML could not be measured.");
     const reachability = buildReachabilitySignal(htmlResult);
     const httpUrl = toHttpUrl(parsed.url);
     const httpRedirect = httpUrl ? await checkHttpToHttpsRedirect(httpUrl) : { value: null, reason: "Website URL is not HTTPS, so HTTP to HTTPS redirect was not checked." };
@@ -64,6 +67,7 @@ export const WebsiteProvider = {
         onlinePresence,
         performance: psi,
         nap,
+        structuredData,
         contactPaths: extractContactPaths(html, parsed.url)
       },
       error: null
@@ -133,6 +137,7 @@ function noWebsiteAudit(place) {
       addressMatches: null,
       reason: "No website URL was available to compare against the Google listing."
     },
+    structuredData: emptyStructuredDataSignals("No website URL was available to check for structured data."),
     contactPaths: { emails: [], socialLinks: [], hasContactForm: null, reason: "No website URL was available to check for contact paths." }
   };
 }
@@ -308,6 +313,124 @@ function emptyHtmlSignals(reason) {
     h1Count: null,
     singleH1: null,
     faviconPresent: null,
+    reason
+  };
+}
+
+// Schema.org's LocalBusiness hierarchy has many subtypes; this covers the
+// common ones without claiming to be exhaustive. A miss here just means a
+// legitimate local-business type isn't recognized yet, not a false claim.
+const LOCAL_BUSINESS_TYPE_PATTERN = /LocalBusiness|Business$|Restaurant|CafeOrCoffeeShop|BarOrPub|FoodEstablishment|Store$|Shop$|Dentist|Attorney|Physician|MedicalClinic|Hospital|Hotel|Lodging|AutoRepair|ProfessionalService|SportsActivityLocation|ChildCare|RealEstateAgent|Locksmith|MovingCompany|RoofingContractor|Electrician|Plumber|GeneralContractor|HairSalon|BeautySalon|DaySpa|NailSalon/i;
+
+/**
+ * Extracts machine-readable structured-data signals from the already-fetched
+ * homepage HTML — no new fetch, no new API. Parsing is defensive throughout:
+ * malformed or multiple JSON-LD blocks never throw, they're just skipped.
+ * @param {string} html
+ * @returns {{hasJsonLd: boolean, localBusinessTypePresent: boolean, napInSchema: boolean, schemaNapText: string, openGraphPresent: boolean}}
+ */
+export function parseStructuredDataSignals(html) {
+  const jsonLdNodes = extractJsonLdBlocks(html).flatMap(flattenJsonLdNodes);
+  const localBusinessNode = jsonLdNodes.find(isLocalBusinessNode) || null;
+  const schemaName = localBusinessNode ? firstString(localBusinessNode.name) : "";
+  const schemaTelephone = localBusinessNode ? firstString(localBusinessNode.telephone || localBusinessNode.contactPoint?.telephone) : "";
+  const schemaAddress = localBusinessNode ? addressToText(localBusinessNode.address) : "";
+  const napInSchema = Boolean(schemaName) && Boolean(schemaTelephone || schemaAddress);
+
+  return {
+    hasJsonLd: jsonLdNodes.length > 0,
+    localBusinessTypePresent: Boolean(localBusinessNode),
+    napInSchema,
+    schemaNapText: napInSchema ? [schemaName, schemaTelephone, schemaAddress].filter(Boolean).join(" ") : "",
+    openGraphPresent: hasOpenGraphTags(html)
+  };
+}
+
+function extractJsonLdBlocks(html) {
+  const matches = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+  return matches
+    .map((block) => block.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, ""))
+    .map((raw) => {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    })
+    .filter((value) => value !== null);
+}
+
+function flattenJsonLdNodes(parsed) {
+  if (Array.isArray(parsed)) return parsed.flatMap(flattenJsonLdNodes);
+  if (parsed && typeof parsed === "object") {
+    const graphNodes = Array.isArray(parsed["@graph"]) ? parsed["@graph"].flatMap(flattenJsonLdNodes) : [];
+    return [parsed, ...graphNodes];
+  }
+  return [];
+}
+
+function isLocalBusinessNode(node) {
+  if (!node || typeof node !== "object") return false;
+  const types = Array.isArray(node["@type"]) ? node["@type"] : [node["@type"]];
+  return types.some((type) => typeof type === "string" && LOCAL_BUSINESS_TYPE_PATTERN.test(type));
+}
+
+function firstString(value) {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) return firstString(value[0]);
+  return "";
+}
+
+function addressToText(address) {
+  if (typeof address === "string") return address.trim();
+  if (address && typeof address === "object") {
+    return [address.streetAddress, address.addressLocality, address.addressRegion, address.postalCode]
+      .filter((part) => typeof part === "string" && part.trim())
+      .join(", ");
+  }
+  return "";
+}
+
+function hasOpenGraphTags(html) {
+  return ["og:title", "og:description", "og:image"].some((property) => Boolean(getMetaProperty(html, property)));
+}
+
+function getMetaProperty(html, property) {
+  const pattern = new RegExp(`<meta[^>]+property=["']${property}["'][^>]*>`, "i");
+  const match = html.match(pattern)?.[0];
+  return match?.match(/content=["']([^"']*)["']/i)?.[1]?.trim() || "";
+}
+
+/**
+ * Combines the raw structured-data parse with a Google-listing NAP match,
+ * reusing buildNapSignals unmodified (fed the matched schema node's own text
+ * instead of the whole page) rather than writing a second matcher.
+ * @param {string} html
+ * @param {object} place
+ */
+export function buildStructuredDataSignals(html, place) {
+  const parsed = parseStructuredDataSignals(html);
+  const schemaNap = parsed.napInSchema
+    ? buildNapSignals(parsed.schemaNapText, place)
+    : { phoneMatches: null, addressMatches: null, reason: "No name, phone, or address fields were found in the homepage's structured data to compare." };
+
+  return {
+    hasJsonLd: parsed.hasJsonLd,
+    localBusinessTypePresent: parsed.localBusinessTypePresent,
+    napInSchema: parsed.napInSchema,
+    napMatchesGoogle: parsed.napInSchema && (schemaNap.phoneMatches === true || schemaNap.addressMatches === true) ? true : null,
+    openGraphPresent: parsed.openGraphPresent,
+    reason: null
+  };
+}
+
+function emptyStructuredDataSignals(reason) {
+  return {
+    hasJsonLd: null,
+    localBusinessTypePresent: null,
+    napInSchema: null,
+    napMatchesGoogle: null,
+    openGraphPresent: null,
     reason
   };
 }

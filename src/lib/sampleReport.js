@@ -7,7 +7,7 @@
  * Only the categories a free (not-yet-unlocked) real report shows are
  * included here: Data Accuracy & Consistency, Discovery / Google Profile
  * Strength, Online Presence (free metrics only), Customer Signals, and
- * Technical Health. Content Freshness and AI Visibility stay behind the
+ * Technical Health. Content Freshness and AI Readiness stay behind the
  * same single locked-scan row a real free report uses — this sample does
  * not fabricate their scores since a real free report never reveals them.
  */

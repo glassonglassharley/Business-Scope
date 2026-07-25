@@ -62,7 +62,7 @@ const PLACES_CATEGORY_CONFIG = [
   { key: "onlinePresence", label: "Online Presence", baseWeight: ONLINE_PRESENCE_BASE_WEIGHT, scanner: (prospect) => scoreOnlinePresence(prospect?.websiteAudit?.onlinePresence || null, isSiteDead(prospect?.websiteAudit)) },
   { key: "contentFreshness", label: "Content Freshness", baseWeight: CONTENT_FRESHNESS_BASE_WEIGHT, scanner: (prospect) => scoreContentFreshness(prospect?.websiteAudit?.contentFreshness || null, prospect?.googlePlaces || null, isSiteDead(prospect?.websiteAudit)) },
   { key: "customerSignals", label: "Customer Signals", baseWeight: 10, scanner: (prospect) => scorePlacesCustomerSignals(prospect?.googlePlaces || null) },
-  { key: "aiVisibility", label: "AI Visibility", baseWeight: 10, scanner: null },
+  { key: "aiVisibility", label: "AI Readiness", baseWeight: 10, scanner: (prospect) => scoreAiReadiness(prospect?.websiteAudit?.structuredData || null, prospect?.googlePlaces || null, isSiteDead(prospect?.websiteAudit)) },
   { key: "technicalHealth", label: "Technical Health", baseWeight: TECHNICAL_HEALTH_BASE_WEIGHT, scanner: (prospect) => scoreWebsiteTechnicalHealth(prospect?.websiteAudit || null) }
 ];
 
@@ -245,6 +245,60 @@ function scorePlacesCustomerSignals(place) {
   return { score: averageMetricScore(metrics), metrics };
 }
 
+/**
+ * Measures whether a business publishes the machine-readable facts AI tools
+ * and search engines actually use to identify and cite it — NOT whether it
+ * currently appears in any AI tool's answers. That would require live,
+ * paid, per-scan LLM calls with non-reproducible results; this category
+ * stays limited to what's honestly measurable from data already in hand.
+ * @param {object|null} structuredData from WebsiteProvider
+ * @param {object|null} place googlePlaces data, used only to explain an
+ *   unconfirmed NAP match when Google's own listing has nothing on file.
+ * @param {boolean} siteDead
+ */
+function scoreAiReadiness(structuredData, place, siteDead = false) {
+  if (!structuredData) return { score: null, metrics: [] };
+
+  if (siteDead) {
+    return {
+      score: 0,
+      metrics: [booleanMetric("hasJsonLd", "Structured data present", false, {
+        good: "The homepage publishes machine-readable structured data.",
+        low: "There is no working website, so there is nowhere for AI tools or search engines to find structured facts about this business."
+      })]
+    };
+  }
+
+  const metrics = [
+    booleanMetric("hasJsonLd", "Structured data present", structuredData.hasJsonLd, {
+      good: "The homepage publishes machine-readable structured data (JSON-LD), which AI tools and search engines use to identify the business with confidence.",
+      low: "The homepage has no structured data, so AI tools and search engines have less to work with when identifying this business."
+    }),
+    booleanMetric("localBusinessType", "Local business schema type", structuredData.localBusinessTypePresent, {
+      good: "The structured data identifies this as a local business, the type AI tools look for first.",
+      low: "No LocalBusiness-family schema type was found, so AI tools may not confidently recognize this as a local business."
+    }),
+    booleanMetric("napInSchema", "Name, phone, and address in schema", structuredData.napInSchema, {
+      good: "The business name, phone, and address appear in machine-readable form, not just as page text.",
+      low: "The business name, phone, and address were not found in machine-readable form, only at best as plain page text."
+    }),
+    nullableBooleanMetric("napMatchesGoogle", "Schema details match Google", structuredData.napMatchesGoogle, {
+      good: "The phone or address in the structured data matches the Google listing.",
+      low: "The phone or address in the structured data conflicts with the Google listing.",
+      unavailable: !structuredData.napInSchema
+        ? "No name, phone, or address was found in the structured data to compare against the Google listing."
+        : !place?.phone && !place?.address
+          ? "The Google listing has no phone or address on file to compare against."
+          : "Could not confirm the schema details against the Google listing; this stays neutral."
+    }),
+    booleanMetric("openGraphPresent", "Open Graph tags present", structuredData.openGraphPresent, {
+      good: "Open Graph tags help AI tools, social platforms, and search engines summarize the page correctly.",
+      low: "No Open Graph tags were found, so AI tools and social platforms have less to work with when summarizing the page."
+    })
+  ];
+
+  return { score: averageMetricScore(metrics), metrics };
+}
 
 function scoreWebsiteTechnicalHealth(audit) {
   if (!audit) return { score: null, metrics: [] };
@@ -477,7 +531,12 @@ function suggestedFixForPlacesMetric(categoryKey, metricId) {
     "technicalHealth-performance": "Improve the mobile homepage speed by reducing heavy assets and slow scripts.",
     "technicalHealth-mobile": "Fix the mobile page setup so phone visitors can use the site easily.",
     "technicalHealth-phoneMatch": "Put the same phone number from Google on the website.",
-    "technicalHealth-addressMatch": "Put the same address or service-area language from Google on the website."
+    "technicalHealth-addressMatch": "Put the same address or service-area language from Google on the website.",
+    "aiVisibility-hasJsonLd": "Add LocalBusiness structured data (JSON-LD) to the homepage so AI tools and search engines can identify the business with confidence.",
+    "aiVisibility-localBusinessType": "Set the structured data's @type to LocalBusiness or a matching subtype so AI tools recognize this as a local business.",
+    "aiVisibility-napInSchema": "Add the business name, phone, and address to the homepage's structured data, not just as page text.",
+    "aiVisibility-napMatchesGoogle": "Update the structured data's phone or address so it matches the Google listing exactly.",
+    "aiVisibility-openGraphPresent": "Add Open Graph tags (title, description, image) so AI tools, search engines, and social platforms can summarize the page correctly."
   };
   return fixes[`${categoryKey}-${metricId}`] || "Review this Google listing field and fix the customer-facing gap first.";
 }
