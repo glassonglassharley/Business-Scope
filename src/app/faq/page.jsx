@@ -36,12 +36,6 @@ export default function FAQPage() {
             </details>
           ))}
         </div>
-
-        <div className="mt-8 rounded-xl border border-line bg-nested-surface p-4 text-sm leading-6 text-slate-700">
-          <p className="font-black text-ink">Ready to check a business?</p>
-          <p className="mt-1">Return to the homepage and run the free public-presence checkup. No account or listing access required.</p>
-          <Link className="primary-button mt-4" href="/#business-search">Run my free checkup</Link>
-        </div>
       </article>
       </main>
     </>
