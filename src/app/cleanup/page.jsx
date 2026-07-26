@@ -58,12 +58,17 @@ export default async function CleanupPage({ searchParams }) {
         )}
 
         <section className="hero-grid lg:grid-cols-[1fr_440px]">
-          <div className="hero-copy">
+          <div className="hero-copy lg:self-center">
             <p className="eyebrow">Cleanup Service</p>
             <h1>We’ll fix the issues StreetSignal found</h1>
             <p className="hero-subcopy">
               After your free checkup, we build your full cleanup and show you the finished result — with a few pieces already live so you can see it's real. From there, $297 unlocks making everything live. No changes are ever made without your approval.
             </p>
+            <div className="mt-6 grid gap-2">
+              {guarantees.slice(0, 3).map((point) => (
+                <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>
+              ))}
+            </div>
           </div>
           <div>
             <span id="cleanup-request-sandbox" />
