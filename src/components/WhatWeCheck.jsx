@@ -33,13 +33,11 @@ export function WhatWeCheck() {
         </div>
       </section>
 
-      <section className="final-cta">
-        <div>
-          <h2>Ready to see how your business looks on this journey?</h2>
-          <p>Run a free checkup to find the public details that may be costing you calls, visits, and bookings.</p>
-        </div>
-        <Link className="primary-button w-full sm:w-auto" href="/#business-search">Run free checkup</Link>
-      </section>
+      <div className="rounded-2xl border border-line bg-surface p-5 shadow-soft sm:p-7">
+        <p className="font-black text-ink">Ready to check a real business?</p>
+        <p className="mt-2 text-sm leading-6 text-slate-700">Run the free public-presence checkup from the homepage. No account or listing access required.</p>
+        <Link className="primary-button mt-4" href="/#business-search">Run my free checkup</Link>
+      </div>
     </>
   );
 }

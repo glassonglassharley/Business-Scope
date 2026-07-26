@@ -122,14 +122,6 @@ export default async function CleanupPage({ searchParams }) {
             {guarantees.map((point) => <div key={point} className="trust-point"><span aria-hidden="true">✓</span>{point}</div>)}
           </div>
         </section>
-
-        <section className="final-cta">
-          <div>
-            <h2>Ready to clean up your public presence?</h2>
-            <p>Start with the free checkup, then request a cleanup plan if you want us to fix the issues for you.</p>
-          </div>
-          <a className="primary-button w-full sm:w-auto" href="#cleanup-request">Request cleanup plan</a>
-        </section>
       </div>
       </main>
     </>
