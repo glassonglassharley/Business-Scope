@@ -74,10 +74,6 @@ export default async function CleanupPage({ searchParams }) {
         </section>
 
         <section className="panel-section">
-          <div className="section-heading">
-            <p className="eyebrow">How it works</p>
-            <h2>Four simple steps.</h2>
-          </div>
           <div className="grid gap-4 lg:grid-cols-4">
             {steps.map((step, index) => <StepCard key={step} number={index + 1} step={step} />)}
           </div>
