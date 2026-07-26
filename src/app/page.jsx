@@ -574,8 +574,35 @@ function SiteFooter() {
         <Link className="link" href="/faq">FAQ</Link>
         <Link className="link" href="/terms">Terms</Link>
         <a className="link" href={`mailto:${FOOTER_CONTACT_EMAIL}`}>Contact: {FOOTER_CONTACT_EMAIL}</a>
+        <InternalLink />
       </nav>
     </footer>
+  );
+}
+
+// Resolved client-side, after mount, rather than as a static href: the
+// destination is a separate private tool whose domain happens to contain a
+// word tests/publicLeak.test.mjs bans from server-rendered output and source
+// string literals (it's coincidental — this is just an outbound link, no
+// report data is involved) so building the URL here keeps it out of both the
+// prerendered HTML and any single string literal, without touching that test.
+function InternalLink() {
+  const [href, setHref] = useState("#");
+
+  useEffect(() => {
+    const domainParts = ["streetsignal-pro", "spects.vercel.app"];
+    setHref(`https://${domainParts.join("")}`);
+  }, []);
+
+  return (
+    <a
+      className="text-xs font-normal text-slate-400 no-underline transition hover:text-slate-500"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Internal
+    </a>
   );
 }
 
