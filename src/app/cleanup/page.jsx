@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { CleanupRequestForm } from "@/components/CleanupRequestForm";
 import { SiteHeader } from "@/components/SiteHeader";
-import { BRAND, CONTACT_EMAIL, SITE_URL } from "@/lib/brand";
-
-const contactEmail = CONTACT_EMAIL || "hello@streetsignal.com";
+import { BRAND, SITE_URL } from "@/lib/brand";
 
 const steps = [
   "Run the free StreetSignal checkup",
@@ -37,13 +35,27 @@ export const metadata = {
   }
 };
 
-export default function CleanupPage() {
+export default async function CleanupPage({ searchParams }) {
+  const params = await searchParams;
+  const checkoutStatus = params?.checkout;
+
   return (
     <>
       <SiteHeader />
       <main className="min-h-screen bg-paper px-4 py-6 text-ink sm:px-5 sm:py-10">
       <div className="mx-auto grid max-w-7xl gap-8">
         <Link className="link text-sm font-bold" href="/">← Back to {BRAND}</Link>
+
+        {checkoutStatus === "success" && (
+          <div className="rounded-xl border border-line bg-nested-surface p-4 text-sm font-bold leading-6 text-ink">
+            Payment received — thank you! We&apos;ll be in touch at the email you provided to get started.
+          </div>
+        )}
+        {checkoutStatus === "cancelled" && (
+          <div className="rounded-xl border border-line bg-nested-surface p-4 text-sm font-bold leading-6 text-ink">
+            Checkout was cancelled — no payment was made. You can try again below whenever you&apos;re ready.
+          </div>
+        )}
 
         <section className="hero-grid lg:grid-cols-[1fr_440px]">
           <div className="hero-copy">
@@ -57,7 +69,7 @@ export default function CleanupPage() {
           <div>
             <span id="cleanup-request-sandbox" />
             <span id="cleanup-request-full" />
-            <CleanupRequestForm contactEmail={contactEmail} />
+            <CleanupRequestForm />
           </div>
         </section>
 

@@ -16,10 +16,11 @@ const PACKAGES = {
   full: { label: "Full Cleanup", price: "$297", description: "Makes every fixed issue live." }
 };
 
-export function CleanupRequestForm({ contactEmail }) {
+export function CleanupRequestForm() {
   const [form, setForm] = useState(initialForm);
   const [packageChoice, setPackageChoice] = useState("full");
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // The two pricing cards on this page link to #cleanup-request-sandbox /
   // #cleanup-request-full (anchors placed right above this form) so the
@@ -42,24 +43,25 @@ export function CleanupRequestForm({ contactEmail }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
-    const packageLabel = `${PACKAGES[packageChoice].label} (${PACKAGES[packageChoice].price})`;
-    const subject = encodeURIComponent(`${packageLabel} request: ${form.businessName}`);
-    const body = encodeURIComponent([
-      `Service requested: ${packageLabel}`,
-      `Name: ${form.name}`,
-      `Business name: ${form.businessName}`,
-      `Email: ${form.email}`,
-      `Website: ${form.website || "Not provided"}`,
-      `StreetSignal report: ${form.reportLink || "Not provided"}`,
-      "",
-      "Priorities:",
-      form.priorities || "Not provided"
-    ].join("\n"));
-
-    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ package: packageChoice, ...form })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.url) {
+        throw new Error(data.error || "Checkout failed. Please try again.");
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -108,8 +110,10 @@ export function CleanupRequestForm({ contactEmail }) {
         <textarea className="input min-h-32 resize-y" value={form.priorities} onChange={(event) => update("priorities", event.target.value)} />
       </Field>
 
-      <button className="primary-button w-full sm:w-auto" type="submit">Request {PACKAGES[packageChoice].label}</button>
-      {submitted && <p className="text-sm font-bold leading-6 text-slate-700">Your email client should open with the cleanup request filled in.</p>}
+      <button className="primary-button w-full sm:w-auto" type="submit" disabled={loading}>
+        {loading ? "Redirecting to payment…" : `Pay ${PACKAGES[packageChoice].price} for ${PACKAGES[packageChoice].label}`}
+      </button>
+      {error && <p className="text-sm font-bold leading-6 text-red-600">{error}</p>}
     </form>
   );
 }
