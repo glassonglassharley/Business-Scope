@@ -5,6 +5,7 @@ import { bandForScore, formatDate } from "@/lib/scoring";
 import { getScoringCategories } from "@/lib/scoringConfig";
 import { encodeAuditForUrl } from "@/lib/shareLinks";
 import { BRAND } from "@/lib/brand";
+import { ScoreMethodology } from "@/components/ScoreMethodology";
 
 export function ReportView({ audit, preparerName, sharedMode = false }) {
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
@@ -258,6 +259,8 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
           <div className="mt-1 text-xs font-bold text-slate-500">Checks completed: {breakdown.availableWeight}%</div>
         </div>
       </div>
+
+      <ScoreMethodology />
 
       <div className="no-print mt-5 flex flex-col gap-3 rounded-lg border border-line bg-nested-surface p-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-bold text-slate-700">Detailed checks view</p>

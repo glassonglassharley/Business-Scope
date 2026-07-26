@@ -67,6 +67,18 @@ const PLACES_CATEGORY_CONFIG = [
 ];
 
 /**
+ * Display-only category weights for "how this score is calculated" UI.
+ * Derived directly from PLACES_CATEGORY_CONFIG (scanner functions omitted)
+ * so any explanation of the methodology can never drift from what the
+ * engine actually scores with. Base weights are relative units, not
+ * percentages — they currently total less than 100 by design; see
+ * calculateBusinessHealthScore for how measured categories get rebalanced
+ * to 100 per report.
+ * @type {Array<{ key: string, label: string, baseWeight: number }>}
+ */
+export const PLACES_CATEGORY_WEIGHTS = PLACES_CATEGORY_CONFIG.map(({ key, label, baseWeight }) => ({ key, label, baseWeight }));
+
+/**
  * Calculates the Google Places-backed Business Health Score.
  * Only categories populated with real Places data are measured. Unbuilt scanners
  * are marked not_yet_scanned and excluded from the weighted total; measured

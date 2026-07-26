@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { bandForScore } from "@/lib/scoring";
 import { BRAND } from "@/lib/brand";
 import { SAMPLE_REPORTS } from "@/lib/sampleReport";
+import { ScoreMethodology } from "@/components/ScoreMethodology";
 
 const STORAGE_KEY = "streetSignal.sampleReportIndex.v1";
 
@@ -103,6 +104,8 @@ export function SampleReport({ checkedDate }) {
             <div className="mt-1 text-xs font-bold text-slate-500">Checks completed: {availableWeight}%</div>
           </div>
         </div>
+
+        <ScoreMethodology />
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {categories.map((category) => <SampleCategoryCard key={category.key} category={category} />)}
