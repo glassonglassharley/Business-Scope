@@ -467,7 +467,7 @@ a {
   }
 
   .diagnostic-form.compact {
-    @apply mt-5 border-brand/60 bg-search-surface/90 shadow-soft;
+    @apply mt-3 border-brand/60 bg-search-surface/90 shadow-soft sm:mt-5;
   }
 
   .field-label {

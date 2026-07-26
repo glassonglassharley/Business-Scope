@@ -254,7 +254,10 @@ function PublicHome({ onAuditComplete }) {
     <div className="grid gap-8">
       <section className="hero-grid">
         <div className="hero-copy lg:relative lg:z-0 lg:self-stretch lg:overflow-hidden">
-          <h1>Find the online mistakes costing you calls, visits, bookings, and clients.</h1>
+          <h1>
+            <span className="sm:hidden">Find the online mistakes costing you customers.</span>
+            <span className="hidden sm:inline">Find the online mistakes costing you calls, visits, bookings, and clients.</span>
+          </h1>
           <BusinessSearch onAuditComplete={onAuditComplete} variant="compact" />
           <CitySkyline />
         </div>
