@@ -64,7 +64,6 @@ export default async function CleanupPage({ searchParams }) {
             <p className="hero-subcopy">
               After your free checkup, we build your full cleanup and show you the finished result — with a few pieces already live so you can see it's real. From there, $297 unlocks making everything live. No changes are ever made without your approval.
             </p>
-            <a className="primary-button mt-6 w-full sm:w-auto" href="#cleanup-request">Request cleanup plan</a>
           </div>
           <div>
             <span id="cleanup-request-sandbox" />
