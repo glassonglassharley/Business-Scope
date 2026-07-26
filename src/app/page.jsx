@@ -440,6 +440,9 @@ function ProblemCard({ title, body, status, picture }) {
 function HowItWorks() {
   return (
     <section id="how-it-works" className="panel-section scroll-mt-24">
+      <div className="section-heading">
+        <p className="eyebrow">How it works</p>
+      </div>
       <div className="grid gap-4 lg:grid-cols-4">
         {howItWorks.map((step, index) => <StepCard key={step} number={index + 1} step={step} />)}
       </div>
