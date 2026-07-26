@@ -23,6 +23,9 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
   const weakestMeasuredPlaceCategory = isPlacesBreakdown
     ? audit.score.breakdown.categories.filter((category) => category.status === "measured").sort((a, b) => a.score - b.score)[0]
     : null;
+  const visiblePrioritizedFixes = (healthScore?.prioritizedIssues || [])
+    .filter((issue) => fullReportUnlocked || (isPlacesBreakdown ? isFreePlacesIssue(issue) : !isPaidLegacyIssue(issue)))
+    .slice(0, 5);
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const payload = encodeAuditForUrl({ ...audit, preparerName: reportPreparer });
@@ -89,6 +92,29 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
           </div>
         </div>
       </section>
+
+      {visiblePrioritizedFixes.length > 0 && (
+        <section className="print-break-inside border-b border-line p-5 sm:p-7">
+          <h4 className="font-black text-ink">{fullReportUnlocked ? "Prioritized next fixes" : "Free prioritized next fixes"}</h4>
+          <div className="mt-3 grid gap-3">
+            {isPlacesBreakdown
+              ? visiblePrioritizedFixes.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)
+              : visiblePrioritizedFixes.map((issue) => (
+                  <div key={issue.id} className="grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0 md:grid-cols-[1fr_auto]">
+                    <div>
+                      <p className="font-black text-ink">{issue.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-700">{issue.suggestedFix}</p>
+                    </div>
+                    <div className="text-sm font-black text-slate-700 md:text-right">
+                      <p>{issue.impact} impact</p>
+                      <p className="text-brand">+{issue.estimatedImpact} pts</p>
+                      <p className="text-xs text-slate-500">{issue.difficulty} | {issue.timeEstimate}</p>
+                    </div>
+                  </div>
+                ))}
+          </div>
+        </section>
+      )}
 
       {!isPlacesBreakdown && (
         <section className="print-break-inside grid gap-4 border-b border-line p-5 sm:p-7">
@@ -210,7 +236,6 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
   const displayedCategories = showAllChecks
     ? visibleCategories
     : visibleCategories.filter((category) => category.metrics.some((metric) => issueMetricIds.has(`${category.key}-${metric.id}`)));
-  const visiblePrioritizedIssues = (breakdown.prioritizedIssues || []).filter((issue) => fullReportUnlocked || isFreePlacesIssue(issue));
 
   return (
     <section className="print-break-inside border-b border-line p-5 sm:p-7">
@@ -264,15 +289,6 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
           </div>
         )}
       </div>
-
-      {visiblePrioritizedIssues.length > 0 && (
-        <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">{fullReportUnlocked ? "Prioritized next fixes" : "Free prioritized next fixes"}</h4>
-          <div className="mt-3 grid gap-3">
-            {visiblePrioritizedIssues.slice(0, 5).map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
@@ -352,7 +368,6 @@ function BusinessHealthSection({ healthScore, fullReportUnlocked }) {
   if (healthScore.availableWeight !== undefined) return <PlacesHealthSection breakdown={healthScore} fullReportUnlocked={fullReportUnlocked} />;
 
   const visibleCategories = fullReportUnlocked ? healthScore.categories : healthScore.categories.filter((category) => !isPaidLegacyCategory(category));
-  const freeIssues = (healthScore.prioritizedIssues || []).filter((issue) => fullReportUnlocked || !isPaidLegacyIssue(issue));
 
   return (
     <section className="print-break-inside border-b border-line p-5 sm:p-7">
@@ -382,27 +397,6 @@ function BusinessHealthSection({ healthScore, fullReportUnlocked }) {
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {visibleCategories.map((category) => <HealthCategoryCard key={category.key} category={category} />)}
       </div>
-
-      {freeIssues.length > 0 && (
-        <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">{fullReportUnlocked ? "Prioritized next fixes" : "Free prioritized next fixes"}</h4>
-          <div className="mt-3 grid gap-3">
-            {freeIssues.slice(0, 5).map((issue) => (
-              <div key={issue.id} className="grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0 md:grid-cols-[1fr_auto]">
-                <div>
-                  <p className="font-black text-ink">{issue.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">{issue.suggestedFix}</p>
-                </div>
-                <div className="text-sm font-black text-slate-700 md:text-right">
-                  <p>{issue.impact} impact</p>
-                  <p className="text-brand">+{issue.estimatedImpact} pts</p>
-                  <p className="text-xs text-slate-500">{issue.difficulty} | {issue.timeEstimate}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

@@ -81,6 +81,13 @@ export function SampleReport({ checkedDate }) {
         </div>
       </section>
 
+      <section className="border-b border-line p-5 sm:p-7">
+        <h4 className="font-black text-ink">Prioritized next fixes</h4>
+        <div className="mt-3 grid gap-3">
+          {prioritizedIssues.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
+        </div>
+      </section>
+
       <section className="p-5 sm:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -99,13 +106,6 @@ export function SampleReport({ checkedDate }) {
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {categories.map((category) => <SampleCategoryCard key={category.key} category={category} />)}
-        </div>
-
-        <div className="mt-5 rounded-lg border border-line bg-nested-surface p-4">
-          <h4 className="font-black text-ink">Prioritized next fixes</h4>
-          <div className="mt-3 grid gap-3">
-            {prioritizedIssues.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)}
-          </div>
         </div>
       </section>
     </article>
