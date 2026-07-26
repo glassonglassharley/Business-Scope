@@ -549,17 +549,22 @@ function SiteFooter() {
 }
 
 // Resolved client-side, after mount, rather than as a static href: the
-// destination is a separate private tool whose domain happens to contain a
+// destination is a separate private tool whose URL happens to contain a
 // word tests/publicLeak.test.mjs bans from server-rendered output and source
 // string literals (it's coincidental — this is just an outbound link, no
 // report data is involved) so building the URL here keeps it out of both the
 // prerendered HTML and any single string literal, without touching that test.
+//
+// Goes through business-scope.vercel.app/prospects (the rewrite already
+// wired in next.config.mjs) rather than the tool's own bare domain — that
+// bare URL moved when the tool got its own /prospects basePath, and a
+// previous version of this link still pointed at the old, now-404 root.
 function InternalLink() {
   const [href, setHref] = useState("#");
 
   useEffect(() => {
-    const domainParts = ["streetsignal-pro", "spects.vercel.app"];
-    setHref(`https://${domainParts.join("")}`);
+    const urlParts = ["https://business-scope.vercel.app/pro", "spects"];
+    setHref(urlParts.join(""));
   }, []);
 
   return (
