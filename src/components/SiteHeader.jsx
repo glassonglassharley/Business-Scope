@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 
 const NAV_ITEMS = [
-  ["How It Works", "/#how-it-works"],
+  ["Business Scan", "/#how-it-works"],
   ["Sample Report", "/sample-report"],
   ["Cleanup", "/cleanup"],
   ["What We Check", "/what-we-check"],

@@ -171,7 +171,7 @@ export default function Home() {
   }
 
   const navItems = [
-    ["How It Works", "#how-it-works"],
+    ["Business Scan", "#how-it-works"],
     ["Sample Report", "/sample-report"],
     ["Cleanup", "/cleanup"],
     ["What We Check", "/what-we-check"],
