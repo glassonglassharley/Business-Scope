@@ -25,7 +25,7 @@ export default function FAQPage() {
         <p className="eyebrow mt-8">FAQ</p>
         <h1 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-5xl">Clear answers before you run a checkup.</h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
-          StreetSignal checks public-facing business information. These answers match the current live product and avoid promises the scanner cannot support yet.
+          Thorost checks public-facing business information. These answers match the current live product and avoid promises the scanner cannot support yet.
         </p>
 
         <div className="faq-list mt-8">

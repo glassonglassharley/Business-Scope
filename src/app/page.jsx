@@ -14,7 +14,7 @@ import { decodeAuditFromUrl } from "@/lib/shareLinks";
 const SETTINGS_KEY = "digitalHealthScore.settings.v1";
 const REQUESTS_KEY = "businessScope.requests.v1";
 const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
-const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "hello@streetsignal.com";
+const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "hello@thorost.com";
 
 const defaultSettings = {
   preparerName: BRAND
@@ -49,7 +49,7 @@ const problemCardSets = [
 
 const howItWorks = [
   "Find and confirm your business.",
-  "StreetSignal checks the public customer journey.",
+  "Thorost checks the public customer journey.",
   "Review issues ranked by likely customer impact.",
   "Fix them yourself or request help."
 ];
@@ -184,7 +184,7 @@ export default function Home() {
       <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5">
           <button className="wordmark" aria-label={`${BRAND} home`} onClick={() => setView("splash")}>
-            <span className="wordmark-mark" aria-hidden="true">SS</span>
+            <span className="wordmark-mark" aria-hidden="true">T</span>
             <span>{BRAND}</span>
           </button>
           {!sharedAudit && (
@@ -512,7 +512,7 @@ function VisibilitySnapshotRequest() {
       <div className="panel p-5 sm:p-7">
         <p className="eyebrow">Free {OFFER}</p>
         <h1 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">See what customers see before they choose you.</h1>
-        <p className="mt-4 leading-7 text-slate-700">Send the basics. StreetSignal checks public details that affect trust, visibility, and action.</p>
+        <p className="mt-4 leading-7 text-slate-700">Send the basics. Thorost checks public details that affect trust, visibility, and action.</p>
       </div>
 
       <form className="panel grid gap-4 p-5 sm:p-7" onSubmit={submit}>

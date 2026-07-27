@@ -101,7 +101,7 @@ export function CleanupRequestForm() {
         <Field label="Website" hint="optional">
           <input className="input" type="url" inputMode="url" placeholder="https://example.com" value={form.website} onChange={(event) => update("website", event.target.value)} />
         </Field>
-        <Field label="Link to StreetSignal report" hint="optional">
+        <Field label="Link to Thorost report" hint="optional">
           <input className="input" type="url" inputMode="url" placeholder="https://business-scope.vercel.app/..." value={form.reportLink} onChange={(event) => update("reportLink", event.target.value)} />
         </Field>
       </div>

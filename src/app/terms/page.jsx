@@ -26,25 +26,25 @@ export default function TermsPage() {
             <p>{BRAND} provides an informational public-presence checkup. It helps identify public details, trust gaps, and customer-action paths that may need review.</p>
           </Section>
           <Section title="No revenue guarantee">
-            <p>The report is not a promise of more calls, visits, bookings, orders, rankings, or revenue. Business results depend on many factors outside StreetSignal’s control.</p>
+            <p>The report is not a promise of more calls, visits, bookings, orders, rankings, or revenue. Business results depend on many factors outside Thorost’s control.</p>
           </Section>
           <Section title="Accuracy limitations">
-            <p>StreetSignal checks public sources that may be incomplete, unavailable, outdated, or temporarily inconsistent. Users should verify findings before making changes.</p>
+            <p>Thorost checks public sources that may be incomplete, unavailable, outdated, or temporarily inconsistent. Users should verify findings before making changes.</p>
           </Section>
           <Section title="User responsibility">
             <p>You are responsible for confirming that submitted business information is accurate and that you have permission to request a checkup for the business.</p>
           </Section>
           <Section title="Ownership of submitted information">
-            <p>You keep ownership of information you submit. You allow StreetSignal to use it to find the business, prepare the report, and respond to your request.</p>
+            <p>You keep ownership of information you submit. You allow Thorost to use it to find the business, prepare the report, and respond to your request.</p>
           </Section>
           <Section title="Acceptable use">
-            <p>Do not use StreetSignal to submit false information, overload the service, reverse engineer private systems, scan businesses for harassment, or upload secrets, passwords, or private customer data.</p>
+            <p>Do not use Thorost to submit false information, overload the service, reverse engineer private systems, scan businesses for harassment, or upload secrets, passwords, or private customer data.</p>
           </Section>
           <Section title="Service availability">
-            <p>The service may be unavailable, incomplete, or rate-limited. Public data providers and websites may fail to respond. StreetSignal may show partial or failed scan states when that happens.</p>
+            <p>The service may be unavailable, incomplete, or rate-limited. Public data providers and websites may fail to respond. Thorost may show partial or failed scan states when that happens.</p>
           </Section>
           <Section title="Liability limitations">
-            <p>To the extent allowed by law, StreetSignal is provided as-is and is not liable for decisions made solely from a report without independent verification.</p>
+            <p>To the extent allowed by law, Thorost is provided as-is and is not liable for decisions made solely from a report without independent verification.</p>
           </Section>
           <Section title="Contact">
             {CONTACT_EMAIL ? (

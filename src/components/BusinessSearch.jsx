@@ -31,7 +31,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
   function validate() {
     const nextErrors = {};
     if (!form.businessName.trim()) nextErrors.businessName = "Enter the business name customers would search for.";
-    if (!form.location.trim()) nextErrors.location = "Add a city, neighborhood, or service area so StreetSignal can find the correct listing.";
+    if (!form.location.trim()) nextErrors.location = "Add a city, neighborhood, or service area so Thorost can find the correct listing.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setStatus("validation_error");
@@ -84,11 +84,11 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
 
       setCandidates(nextCandidates);
       setStatus(nextCandidates.length > 1 ? "multiple_matches" : "confirmation");
-      setMessage(nextCandidates.length > 1 ? "Choose the correct business before StreetSignal runs the checkup." : "Confirm this is the correct business before StreetSignal runs the checkup.");
+      setMessage(nextCandidates.length > 1 ? "Choose the correct business before Thorost runs the checkup." : "Confirm this is the correct business before Thorost runs the checkup.");
       if (nextCandidates.length === 1) setSelectedCandidate(nextCandidates[0]);
     } catch {
       setStatus("failed");
-      setMessage("StreetSignal could not reach the lookup service. Please try again in a moment.");
+      setMessage("Thorost could not reach the lookup service. Please try again in a moment.");
     }
   }
 
@@ -124,7 +124,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
       setSelectedCandidate(null);
     } catch {
       setStatus("failed");
-      setMessage("StreetSignal could not finish the checkup. No raw provider error was saved. Please try again.");
+      setMessage("Thorost could not finish the checkup. No raw provider error was saved. Please try again.");
     }
   }
 
@@ -224,7 +224,7 @@ export function BusinessSearch({ onAuditComplete, variant = "hero" }) {
       )}
 
       {status === "not_found" && <StateNote tone="amber" title="Business not found" body="Try the full Google listing name, add the city, or add a nearby neighborhood or service-area keyword. Service-area businesses may appear without a public address." />}
-      {status === "rate_limited" && <StateNote tone="red" title="Scan temporarily limited" body="The lookup provider is rate-limiting requests. Please wait and retry; StreetSignal will not show raw provider errors to customers." />}
+      {status === "rate_limited" && <StateNote tone="red" title="Scan temporarily limited" body="The lookup provider is rate-limiting requests. Please wait and retry; Thorost will not show raw provider errors to customers." />}
       {status === "failed" && <StateNote tone="red" title="Checkup could not run" body="The public lookup service did not complete. No listing access or password is required; please retry in a moment." />}
     </form>
   );
@@ -327,7 +327,7 @@ function messageForPlacesStatus(status) {
   if (status === 400) return "Enter a business name and city or area, then try again.";
   if (status === 404) return "No matching business was found. Check the name, city, or selected location and try again.";
   if (status === 429) return "The lookup provider is rate-limiting scans right now. Wait a moment and retry.";
-  if (status === 503) return "Live public-listing scans are not configured right now. The sample report still shows what StreetSignal checks.";
+  if (status === 503) return "Live public-listing scans are not configured right now. The sample report still shows what Thorost checks.";
   if (status === 502) return "A public data source did not respond. Retry in a moment.";
-  return "StreetSignal could not run this checkup. Try again in a moment.";
+  return "Thorost could not run this checkup. Try again in a moment.";
 }

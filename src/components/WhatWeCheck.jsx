@@ -6,10 +6,10 @@ export function WhatWeCheck() {
     <>
       <section id="what-we-check" className="panel-section scroll-mt-24">
         <div className="section-heading">
-          <p className="eyebrow">What StreetSignal checks</p>
+          <p className="eyebrow">What Thorost checks</p>
           <h2>A structured look at the public customer journey.</h2>
           <p>
-            StreetSignal looks at the public path a customer takes — from first impression to the moment they try to
+            Thorost looks at the public path a customer takes — from first impression to the moment they try to
             call, book, or buy — and shows you exactly where it breaks. We separate basic facts, trust signals, and
             customer-action paths so you can see what to fix first.
           </p>

@@ -25,7 +25,7 @@ export function SiteHeader() {
     <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5">
         <Link className="wordmark" aria-label={`${BRAND} home`} href="/">
-          <span className="wordmark-mark" aria-hidden="true">SS</span>
+          <span className="wordmark-mark" aria-hidden="true">T</span>
           <span>{BRAND}</span>
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">

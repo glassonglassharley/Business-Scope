@@ -163,7 +163,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
               We can prepare a clearly scoped cleanup plan. No changes are made without your approval.
             </p>
           </div>
-          <a className="primary-button w-full md:w-auto" href="mailto:hello@streetsignal.com?subject=Request%20cleanup%20plan">
+          <a className="primary-button w-full md:w-auto" href="mailto:hello@thorost.com?subject=Request%20cleanup%20plan">
             Request cleanup plan
           </a>
         </div>
@@ -245,7 +245,7 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
           <p className="eyebrow">Business Health Score</p>
           <h3 className="mt-2 text-2xl font-black text-ink">Google Places scan</h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.
+            Your score is based on the checks Thorost could complete. Any unavailable checks are identified separately and do not automatically lower the score.
           </p>
           {breakdown.hasScanError && (
             <p className="mt-3 text-xs font-bold leading-5 text-slate-500">

@@ -95,7 +95,7 @@ export function SampleReport({ checkedDate }) {
             <p className="eyebrow">Business Health Score</p>
             <h3 className="mt-2 text-2xl font-black text-ink">Google Places scan</h3>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-              Your score is based on the checks StreetSignal could complete. Any unavailable checks are identified separately and do not automatically lower the score.
+              Your score is based on the checks Thorost could complete. Any unavailable checks are identified separately and do not automatically lower the score.
             </p>
           </div>
           <div className="rounded-lg border border-line bg-nested-surface p-4 text-left sm:text-right">

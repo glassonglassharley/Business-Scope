@@ -28,13 +28,13 @@ export default function PrivacyPage() {
             <p>The information is used to find the correct business, run public-facing checks, prepare a diagnostic report, and respond if you request follow-up.</p>
           </Section>
           <Section title="Business search terms and submitted records">
-            <p>The live business search sends search terms to the StreetSignal API so it can query public listing providers. Reports created in the browser are saved to localStorage on your device. The separate request form currently stores submissions in your browser localStorage unless a production storage destination is configured.</p>
+            <p>The live business search sends search terms to the Thorost API so it can query public listing providers. Reports created in the browser are saved to localStorage on your device. The separate request form currently stores submissions in your browser localStorage unless a production storage destination is configured.</p>
           </Section>
           <Section title="Geolocation">
             <p>If you choose “Use my current area,” your browser asks for permission. Approximate coordinates are used only to narrow the business lookup. You can deny location access and search by city or area instead.</p>
           </Section>
           <Section title="Third-party APIs">
-            <p>Business names, locations, and selected listing identifiers may be sent to public data providers such as Google Places to find and check the business. Website URLs may be requested by StreetSignal’s website audit endpoint to test public customer-action paths.</p>
+            <p>Business names, locations, and selected listing identifiers may be sent to public data providers such as Google Places to find and check the business. Website URLs may be requested by Thorost’s website audit endpoint to test public customer-action paths.</p>
           </Section>
           <Section title="Analytics">
             <p>No analytics provider is configured in the current codebase. If analytics are added later, this policy should be updated to identify the provider and data collected.</p>

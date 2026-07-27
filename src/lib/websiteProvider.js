@@ -208,7 +208,7 @@ async function fetchWithTimeout(url, timeoutMs) {
       cache: "no-store",
       redirect: "manual",
       signal: controller.signal,
-      headers: { "user-agent": "StreetSignalWebsiteAudit/1.0", accept: "text/html,application/xhtml+xml" }
+      headers: { "user-agent": "ThorostWebsiteAudit/1.0", accept: "text/html,application/xhtml+xml" }
     });
     return { ok: true, status: response.status, headers: response.headers, response };
   } catch (error) {

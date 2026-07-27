@@ -31,7 +31,7 @@ export function ScoreMethodology() {
       {open && (
         <div id={panelId} className="mt-3 rounded-lg border border-line bg-nested-surface p-4">
           <p className="text-sm leading-6 text-slate-700">
-            Your StreetSignal score is a weighted average of {PLACES_CATEGORY_WEIGHTS.length} public-presence categories. Unavailable checks are shown separately and do not lower the score.
+            Your Thorost score is a weighted average of {PLACES_CATEGORY_WEIGHTS.length} public-presence categories. Unavailable checks are shown separately and do not lower the score.
           </p>
           <div className="mt-4 grid gap-3">
             {PLACES_CATEGORY_WEIGHTS.map((category) => (
