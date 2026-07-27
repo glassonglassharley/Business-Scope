@@ -1,12 +1,5 @@
-import { Fraunces } from "next/font/google";
 import { BRAND, SITE_URL, TAGLINE } from "@/lib/brand";
 import "./globals.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-serif"
-});
 
 const description = "Find inaccurate business details, broken customer links, trust gaps, and other public-facing issues that may be costing your local business calls, visits, and bookings.";
 const title = `${BRAND} | ${TAGLINE}`;
@@ -50,7 +43,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={fraunces.variable}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

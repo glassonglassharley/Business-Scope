@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
-import { ThorostLogo, ThorostMark } from "@/components/ThorostLogo";
+import { ThorostLogo } from "@/components/ThorostLogo";
 
 const NAV_ITEMS = [
   ["Business Scan", "/#how-it-works"],
@@ -26,8 +26,7 @@ export function SiteHeader() {
     <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5">
         <Link className="wordmark" aria-label={`${BRAND} home`} href="/">
-          <ThorostMark className="h-9 w-9 sm:hidden" />
-          <ThorostLogo className="hidden h-11 sm:block" />
+          <ThorostLogo />
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
           {NAV_ITEMS.map(([label, href]) => <Link key={label} className="nav-link" href={href}>{label}</Link>)}
