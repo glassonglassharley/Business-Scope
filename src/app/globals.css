@@ -79,11 +79,7 @@ a {
   }
 
   .wordmark {
-    @apply inline-flex min-h-11 items-center gap-3 rounded-md px-1 text-left text-xl font-black tracking-tight text-ink;
-  }
-
-  .wordmark-mark {
-    @apply flex h-9 w-9 items-center justify-center rounded-md bg-ink text-xs font-black tracking-[0.12em] text-white;
+    @apply inline-flex min-h-11 items-center rounded-md px-1 text-left;
   }
 
   .nav-link {

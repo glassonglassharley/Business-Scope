@@ -6,6 +6,7 @@ import { AuditDashboard } from "@/components/AuditDashboard";
 import { BusinessSearch } from "@/components/BusinessSearch";
 import { NewAuditForm } from "@/components/NewAuditForm";
 import { ReportView } from "@/components/ReportView";
+import { ThorostLogo, ThorostMark } from "@/components/ThorostLogo";
 import { BRAND, CONTACT_EMAIL, OFFER, SITE_URL } from "@/lib/brand";
 import { getAudits, saveAudit, seedAuditsIfEmpty } from "@/lib/auditStore";
 import { buildAudit } from "@/lib/buildAudit";
@@ -184,8 +185,8 @@ export default function Home() {
       <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5">
           <button className="wordmark" aria-label={`${BRAND} home`} onClick={() => setView("splash")}>
-            <span className="wordmark-mark" aria-hidden="true">T</span>
-            <span>{BRAND}</span>
+            <ThorostMark className="h-9 w-9 sm:hidden" />
+            <ThorostLogo className="hidden h-11 sm:block" />
           </button>
           {!sharedAudit && (
             <>
