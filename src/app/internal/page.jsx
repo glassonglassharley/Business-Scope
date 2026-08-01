@@ -21,7 +21,7 @@ export default function InternalReportPreviewPage() {
         <div className="mx-auto grid max-w-7xl gap-5">
           <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="eyebrow">Internal</p>
+              <p className="eyebrow">Internal preview — seeded data</p>
               <h1 className="text-3xl font-black tracking-tight text-ink">Premium report preview</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
                 This internal preview renders the deployed report component with seeded audit data so the current report design can be reviewed on thorost.com.

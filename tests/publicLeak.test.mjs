@@ -41,6 +41,8 @@ const BANNED = /prospect|viability|momentum|disqualif|weakness|reachability|comp
 
 const { buildPublicReport } = await import("../src/lib/publicReport.js");
 const { encodeAuditForUrl, decodeAuditFromUrl } = await import("../src/lib/shareLinks.js");
+const { buildReportSummary, createReportViewModel, sampleReportToAudit } = await import("../src/lib/reportViewModel.js");
+const { SAMPLE_REPORTS } = await import("../src/lib/sampleReport.js");
 
 // ---------------------------------------------------------------------------
 // Mocked Google upstream so the REAL route handlers run without network.
@@ -283,6 +285,93 @@ test("string literals and JSX text in report-rendering modules are clean", () =>
       assert.equal(match, null, `banned word "${match?.[0]}" in renderable string of ${rel}: ${text.slice(0, 80)}`);
     }
   }
+});
+
+// ---------------------------------------------------------------------------
+// 7: premium report adapter preservation
+// ---------------------------------------------------------------------------
+test("live audit payload maps into the premium report view without changing factual values", async () => {
+  const audit = await buildRealAudit();
+  const viewModel = createReportViewModel(audit);
+
+  assert.equal(viewModel.businessName, audit.businessName);
+  assert.equal(viewModel.score.total, audit.score.total);
+  assert.equal(viewModel.score.breakdown.overallScore, audit.score.breakdown.overallScore);
+  assert.equal(viewModel.score.breakdown.availableWeight, audit.score.breakdown.availableWeight);
+  assert.deepEqual(
+    viewModel.score.breakdown.categories.map((category) => [category.key, category.score, category.status]),
+    audit.score.breakdown.categories.map((category) => [category.key, category.score, category.status])
+  );
+  assert.deepEqual(
+    viewModel.score.breakdown.prioritizedIssues.map((issue) => issue.id),
+    audit.score.breakdown.prioritizedIssues.map((issue) => issue.id)
+  );
+});
+
+test("premium report view model handles missing optional fields, unavailable checks, and zero scores", () => {
+  const viewModel = createReportViewModel({
+    id: "partial-report",
+    score: {
+      total: 0,
+      breakdown: {
+        overallScore: 0,
+        availableWeight: 0,
+        categories: [
+          {
+            key: "onlinePresence",
+            label: "Online Presence",
+            status: "measured",
+            score: 0,
+            metrics: [{ id: "url", label: "Website URL", score: null, note: "Not available" }]
+          },
+          {
+            key: "technicalHealth",
+            label: "Technical Health",
+            status: "scan_unavailable",
+            score: null,
+            metrics: [{ id: "performance", label: "Mobile performance", score: null, note: "Not available" }]
+          }
+        ],
+        prioritizedIssues: []
+      }
+    }
+  });
+
+  assert.equal(viewModel.businessName, "Unknown business");
+  assert.equal(viewModel.industry, "Business type not available");
+  assert.equal(viewModel.city, "Location not available");
+  assert.equal(viewModel.reportDateLabel, "Not available");
+  assert.equal(viewModel.score.total, 0);
+  assert.equal(viewModel.score.breakdown.categories[0].score, 0);
+  assert.equal(viewModel.score.breakdown.categories[1].status, "scan_unavailable");
+  assert.deepEqual(viewModel.gaps, []);
+});
+
+test("sample report adapter feeds the same premium report component shape", () => {
+  const sample = SAMPLE_REPORTS[2];
+  const audit = sampleReportToAudit(sample, "August 1, 2026");
+
+  assert.equal(audit.businessName, sample.business.businessName);
+  assert.equal(audit.score.total, sample.scoreTotal);
+  assert.equal(audit.score.breakdown.availableWeight, sample.availableWeight);
+  assert.deepEqual(audit.score.breakdown.categories.map((category) => category.score), sample.categories.map((category) => category.score));
+  assert.deepEqual(audit.score.breakdown.prioritizedIssues.map((issue) => issue.id), sample.prioritizedIssues.map((issue) => issue.id));
+  assert.equal(audit.fullReportUnlocked, true);
+});
+
+test("copy-summary helper uses live report data and no internal-only label", async () => {
+  const audit = await buildRealAudit();
+  const summary = buildReportSummary(audit);
+
+  assert.ok(summary.includes(audit.businessName));
+  assert.ok(summary.includes(`Score: ${audit.score.total}/100`));
+  assert.equal(summary.includes("Internal preview"), false);
+  assert.equal(BANNED.test(summary), false, `banned word in report summary: ${summary.match(BANNED)?.[0]}`);
+});
+
+test("internal preview and public sample routes exist for build output", () => {
+  assert.equal(existsSync(path.join(projectRoot, "src", "app", "internal", "page.jsx")), true);
+  assert.equal(existsSync(path.join(projectRoot, "src", "app", "sample-report", "page.jsx")), true);
 });
 
 // ---------------------------------------------------------------------------

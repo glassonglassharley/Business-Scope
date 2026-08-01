@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { bandForScore, formatDate } from "@/lib/scoring";
+import { bandForScore } from "@/lib/scoring";
 import { getScoringCategories } from "@/lib/scoringConfig";
 import { encodeAuditForUrl } from "@/lib/shareLinks";
 import { BRAND } from "@/lib/brand";
+import { buildReportSummary, createReportViewModel } from "@/lib/reportViewModel";
 import { ScoreMethodology } from "@/components/ScoreMethodology";
 import { ThorostLogo } from "@/components/ThorostLogo";
 
-export function ReportView({ audit, preparerName, sharedMode = false }) {
+export function ReportView({ audit: auditInput, preparerName, sharedMode = false }) {
+  const audit = useMemo(() => createReportViewModel(auditInput), [auditInput]);
   const [copyStatus, setCopyStatus] = useState("Copy Share Link");
   const [summaryStatus, setSummaryStatus] = useState("Copy report summary");
   const [fullReportUnlocked, setFullReportUnlocked] = useState(Boolean(audit.fullReportUnlocked));
@@ -157,7 +159,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#1f4d33]">Snapshot</p>
             <h1 className="mt-3 break-words text-3xl font-black leading-[1.08] tracking-[-0.035em] text-[#1c1917] [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">{audit.businessName}</h1>
             <p className="mt-4 break-words text-base font-bold leading-7 text-stone-600 [overflow-wrap:anywhere]">
-              {audit.industry} in {audit.city} · Prepared {formatDate(audit.createdAt)}
+              {audit.industry} in {audit.city} · Prepared {audit.reportDateLabel}
             </p>
             <p className="mt-6 max-w-3xl text-lg font-black leading-8 text-[#1f4d33] sm:text-xl">{band.verdict}</p>
           </div>
@@ -169,7 +171,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
         <Insight icon="!" label="Most Urgent Gap" value={audit.gaps[0]?.title ?? "No major gap found"} />
         <Insight icon="▣" label="Weakest Category" value={weakestMeasuredPlaceCategory?.label ?? categoryLabels[lowestCategories[0]?.key]?.label ?? "None"} />
         <Insight icon="↗" label="Likely Customer Impact" value={isFoodBusiness ? "Lost orders and visits" : "Lost calls and quotes"} />
-        <Insight icon="◷" label="Report Date" value={formatDate(audit.createdAt)} />
+        <Insight icon="◷" label="Report Date" value={audit.reportDateLabel} />
       </section>
 
       <section className="print-break-inside border-b border-[#e2dccf] bg-white p-5 sm:p-8 lg:p-10">
@@ -187,7 +189,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
             {isPlacesBreakdown
               ? executiveIssues.map((issue) => <PriorityIssueBox key={issue.id} issue={issue} />)
               : lowestCategories.map((category) => (
-                  <PriorityBox key={category.key} label={categoryLabels[category.key].label} category={category} />
+                  <PriorityBox key={category.key} label={categoryLabels[category.key]?.label ?? category.label ?? "Not available"} category={category} />
                 ))}
           </div>
         </div>
@@ -206,7 +208,7 @@ export function ReportView({ audit, preparerName, sharedMode = false }) {
         <section className="print-break-inside grid gap-4 border-b border-[#e2dccf] bg-white p-5 sm:p-8 lg:p-10">
           <SectionHeader kicker="Diagnostic categories" title="Category Breakdown" />
           {audit.score.categories.map((category) => (
-            <ProgressRow key={category.key} category={category} label={categoryLabels[category.key].label} />
+            <ProgressRow key={category.key} category={category} label={categoryLabels[category.key]?.label ?? category.label ?? "Not available"} />
           ))}
         </section>
       )}
@@ -424,11 +426,12 @@ function PlacesHealthSection({ breakdown, fullReportUnlocked }) {
 }
 
 function PlacesCategoryCard({ category, issueMetricIds, showAllChecks }) {
-  const measured = category.status === "measured";
+  const hasNumericScore = typeof category.score === "number" && Number.isFinite(category.score);
+  const measured = category.status === "measured" && hasNumericScore;
   const unavailable = category.status === "scan_unavailable";
   const band = measured ? bandForScore(category.score) : null;
   const statusText = measured ? "Completed check" : unavailable ? "Unavailable - could not run this check" : "Not included in this checkup";
-  const scoreText = measured ? category.score : unavailable ? "Unavailable" : "Pending";
+  const scoreText = measured ? category.score : unavailable || !hasNumericScore ? "Unavailable" : "Pending";
   const scoreClass = measured ? `text-2xl font-black ${band.textClass}` : unavailable ? "text-sm font-black text-signal-amber" : "text-sm font-black text-stone-500";
   const issueMetrics = category.metrics.filter((metric) => issueMetricIds.has(`${category.key}-${metric.id}`));
   const availableNonIssueMetrics = category.metrics.filter((metric) => typeof metric.score === "number" && !issueMetricIds.has(`${category.key}-${metric.id}`));
@@ -555,7 +558,8 @@ function BusinessHealthSection({ healthScore, fullReportUnlocked }) {
 }
 
 function HealthCategoryCard({ category }) {
-  const band = bandForScore(category.score);
+  const score = typeof category.score === "number" && Number.isFinite(category.score) ? category.score : 0;
+  const band = bandForScore(score);
 
   return (
     <div className="print-avoid rounded-xl border border-[#e0d9cc] bg-white p-4 shadow-[0_14px_36px_rgba(28,25,23,0.06)]">
@@ -563,13 +567,13 @@ function HealthCategoryCard({ category }) {
         <div>
           <h4 className="break-words font-black text-ink [overflow-wrap:anywhere]">{category.label}</h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-stone-500">
-            Weight {category.effectiveWeight}% | Confidence {category.confidence}%
+            Weight {category.effectiveWeight ?? "Not available"}% | Confidence {category.confidence ?? "Not available"}%
           </p>
         </div>
-        <span className={`text-2xl font-black ${band.textClass}`}>{category.score}</span>
+        <span className={`text-2xl font-black ${band.textClass}`}>{typeof category.score === "number" ? category.score : "Not available"}</span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-        <div className={`h-full rounded-full ${band.fillClass}`} style={{ width: `${category.score}%` }} />
+        <div className={`h-full rounded-full ${band.fillClass}`} style={{ width: `${score}%` }} />
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {category.subScores.map((subScore) => (
@@ -605,7 +609,7 @@ function PriorityBox({ label, category }) {
 }
 
 function ProgressRow({ category, label }) {
-  const percentage = Math.round((category.points / category.max) * 100);
+  const percentage = category.max ? Math.round((category.points / category.max) * 100) : 0;
   const band = bandForScore(percentage);
   return (
     <div className="print-avoid">
@@ -628,22 +632,6 @@ function FixCard({ title, body }) {
       <p className="mt-2 break-words text-sm leading-6 text-stone-600 [overflow-wrap:anywhere]">{body}</p>
     </div>
   );
-}
-
-function buildReportSummary(audit) {
-  const lines = [
-    `${audit.businessName} — ${BRAND} checkup`,
-    `Score: ${audit.score.total}/100`,
-    `Prepared: ${formatDate(audit.createdAt)}`,
-    "",
-    "Top findings:"
-  ];
-  audit.gaps.slice(0, 3).forEach((gap, index) => {
-    lines.push(`${index + 1}. ${gap.title} — ${gap.body}`);
-  });
-  const nextFix = audit.score?.breakdown?.prioritizedIssues?.[0]?.suggestedFix || audit.gaps[0]?.body || "Review the highest-impact public-facing issue first.";
-  lines.push("", `Fix first: ${nextFix}`);
-  return lines.join("\n");
 }
 
 
