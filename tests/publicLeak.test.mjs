@@ -375,6 +375,103 @@ test("internal preview and public sample routes exist for build output", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 12: operator decision log (db/migrations/0004_operator_log.sql)
+//
+// The operator_log table records what the operator decided about a business
+// and whether it was handed to a partner. It is written and read ONLY by the
+// separate, password-gated prospects tool. This app must never learn it
+// exists. Its vocabulary is checked separately from BANNED because "verdict"
+// alone is legitimately public — it is the score band's summary sentence in
+// src/lib/scoring.js — so only the compound operator/partner terms are banned.
+// ---------------------------------------------------------------------------
+const OPERATOR_BANNED = /operator[_\s]?log|operator[_\s]?verdict|operator[_\s]?notes|buzz[_\s]?bull|handoff[_\s]?outcome|buzzbull[_\s]?link|buzzbull[_\s]?submitted/i;
+
+function injectOperatorFields(audit) {
+  const poisoned = structuredClone(audit);
+  poisoned.operatorVerdict = "buzzbull";
+  poisoned.operator_verdict = "buzzbull";
+  poisoned.handoffOutcome = "customer";
+  poisoned.buzzBullLink = "https://marketing.buzzbullmarketing.com/book-now?am_id=jonathan3037";
+  poisoned.buzzBullSubmittedAt = "2026-07-16";
+  poisoned.operatorNotes = "owner is ready to buy, do not show this to them";
+  poisoned.contactedAt = "2026-07-14";
+  poisoned.score.operatorVerdict = "buzzbull";
+  poisoned.reviews.handoffOutcome = "lead";
+  poisoned.googlePlaces = { ...(poisoned.googlePlaces || {}), operatorLog: { verdict: "buzzbull" } };
+  return poisoned;
+}
+
+test("public report built from an operator-poisoned audit contains no operator field", async () => {
+  const poisoned = injectOperatorFields(await buildRealAudit());
+  const serialized = JSON.stringify(buildPublicReport(poisoned));
+
+  assert.equal(OPERATOR_BANNED.test(serialized), false, `operator field leaked: ${serialized.match(OPERATOR_BANNED)?.[0]}`);
+  assert.equal(serialized.includes("do not show this to them"), false, "operator notes leaked into the public report");
+  assert.equal(serialized.includes("2026-07-14"), false, "an operator date leaked into the public report");
+});
+
+test("share link and copied summary carry no operator field", async () => {
+  const poisoned = injectOperatorFields(await buildRealAudit());
+
+  const encoded = encodeAuditForUrl({ ...poisoned, preparerName: "Thorost" });
+  const decoded = JSON.stringify(decodeAuditFromUrl(`https://example.com/?report=${encodeURIComponent(encoded)}`));
+  assert.equal(OPERATOR_BANNED.test(decoded), false, `operator field in share payload: ${decoded.match(OPERATOR_BANNED)?.[0]}`);
+
+  const summary = buildReportSummary(createReportViewModel(buildPublicReport(poisoned)));
+  assert.equal(OPERATOR_BANNED.test(summary), false, `operator field in copied summary: ${summary.match(OPERATOR_BANNED)?.[0]}`);
+});
+
+test("no file in the public app mentions the operator log at all", () => {
+  const files = [
+    ...listFiles(path.join(projectRoot, "src")),
+    ...listFiles(path.join(projectRoot, "scripts"))
+  ].filter((file) => /\.(js|jsx|mjs|ts|tsx)$/.test(file));
+
+  assert.ok(files.length > 10, "file walk looks broken — too few files found");
+  for (const file of files) {
+    const source = readFileSync(file, "utf8");
+    const match = source.match(OPERATOR_BANNED);
+    assert.equal(match, null, `${path.relative(projectRoot, file)} mentions "${match?.[0]}" — the operator log belongs only to the prospects tool`);
+  }
+});
+
+test("page metadata and the prerendered build output carry no operator field", (t) => {
+  const nextDir = path.join(projectRoot, ".next", "server", "app");
+  if (!existsSync(nextDir)) {
+    t.skip("no build output — run `npm run build` first");
+    return;
+  }
+
+  const rendered = listFiles(nextDir).filter((file) => /\.(html|rsc|body)$/.test(file));
+  assert.ok(rendered.length > 0, "no prerendered output found to scan");
+  for (const file of rendered) {
+    const source = readFileSync(file, "utf8");
+    const match = source.match(OPERATOR_BANNED);
+    assert.equal(match, null, `operator field "${match?.[0]}" in build output ${path.relative(projectRoot, file)}`);
+  }
+});
+
+test("the operator_log migration is additive and touches no existing table", () => {
+  const migration = path.join(projectRoot, "db", "migrations", "0004_operator_log.sql");
+  assert.equal(existsSync(migration), true, "0004_operator_log.sql is missing");
+
+  const sql = readFileSync(migration, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*--.*$/gm, "");
+
+  // Only CREATE statements. Any ALTER/DROP/UPDATE/DELETE/TRUNCATE here would
+  // mean the migration can change or destroy data that already exists.
+  assert.equal(/\b(alter|drop|truncate|delete\s+from|update)\b/i.test(sql), false, "migration is not purely additive");
+
+  const created = [...sql.matchAll(/create\s+(?:table|index)\s+(\w+)/gi)].map((match) => match[1].toLowerCase());
+  assert.deepEqual(created.sort(), ["operator_log", "operator_log_verdict_idx"]);
+
+  for (const table of ["businesses", "scans", "prospect_scores", "campaigns", "contact_channels", "pipeline", "runs"]) {
+    assert.equal(new RegExp(`\\b${table}\\b`, "i").test(sql), false, `migration references the existing ${table} table`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
 function listFiles(dir) {
