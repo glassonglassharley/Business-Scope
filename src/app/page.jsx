@@ -174,6 +174,7 @@ export default function Home() {
   const navItems = [
     ["Business Scan", "#how-it-works"],
     ["Sample Report", "/sample-report"],
+    ["Action Plan", "/local-seo-action-plan"],
     ["Cleanup", "/cleanup"],
     ["What We Check", "/what-we-check"],
     ["FAQ", "/faq"]

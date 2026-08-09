@@ -8,6 +8,7 @@ import { ThorostLogo } from "@/components/ThorostLogo";
 const NAV_ITEMS = [
   ["Business Scan", "/#how-it-works"],
   ["Sample Report", "/sample-report"],
+  ["Action Plan", "/local-seo-action-plan"],
   ["Cleanup", "/cleanup"],
   ["What We Check", "/what-we-check"],
   ["FAQ", "/faq"]

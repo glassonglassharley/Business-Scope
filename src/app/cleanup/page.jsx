@@ -57,7 +57,7 @@ export default async function CleanupPage({ searchParams }) {
           </div>
         )}
 
-        <section className="grid gap-5 lg:grid-cols-[1fr_440px] lg:items-start">
+        <section className="grid gap-6">
           <div className="hero-copy">
             <p className="eyebrow">Cleanup Service</p>
             <h1>We’ll fix the issues Thorost found</h1>
@@ -65,7 +65,7 @@ export default async function CleanupPage({ searchParams }) {
               After your free checkup, we build your full cleanup and show you the finished result — with a few pieces already live so you can see it's real. From there, $297 unlocks making everything live. No changes are ever made without your approval.
             </p>
           </div>
-          <div>
+          <div className="mx-auto w-full max-w-xl">
             <span id="cleanup-request-sandbox" />
             <span id="cleanup-request-full" />
             <CleanupRequestForm />
