@@ -15,7 +15,7 @@ import { decodeAuditFromUrl } from "@/lib/shareLinks";
 const SETTINGS_KEY = "digitalHealthScore.settings.v1";
 const REQUESTS_KEY = "businessScope.requests.v1";
 const OFFER_LABEL = OFFER.charAt(0).toUpperCase() + OFFER.slice(1);
-const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "hello@thorost.com";
+const FOOTER_CONTACT_EMAIL = CONTACT_EMAIL || "admin@thorost.com";
 
 const defaultSettings = {
   preparerName: BRAND
