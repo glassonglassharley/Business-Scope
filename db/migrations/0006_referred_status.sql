@@ -1,4 +1,4 @@
--- 0005_referred_status.sql
+-- 0006_referred_status.sql
 -- Adds the 'referred' pipeline status: the business was handed to the
 -- fulfillment partner via the partner lead form. Distinct from 'won' (they
 -- bought a Thorost cleanup) — 'referred' means the lead now lives in the

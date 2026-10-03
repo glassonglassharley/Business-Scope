@@ -154,7 +154,7 @@ reason the branch was merged to production.
   drives the `pipeline` table through the funnel, logs contact attempts and
   follow-ups, and hands warm prospects to the fulfillment partner
   (`refer` prints the attributed partner form URL + copy-paste lead summary,
-  marks the row `referred`). New `referred` status added in migration 0005.
+  marks the row `referred`). New `referred` status added in migration 0006.
   Partner specifics come from env (`PARTNER_NAME` / `PARTNER_FORM_URL` /
   `PARTNER_AM_ID`) so the repo stays partner-agnostic per the leak tests.
   No web UI — CLI-only by design, same as the rest of the private layer.
