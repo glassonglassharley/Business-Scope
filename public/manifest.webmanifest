@@ -1,0 +1,30 @@
+{
+  "name": "Thorost | Local Business Presence Checkup",
+  "short_name": "Thorost",
+  "description": "Find inaccurate business details, broken customer links, trust gaps, and other public-facing issues that may be costing your local business calls, visits, and bookings.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/thorost-icon-20261003-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/thorost-icon-20261003-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/thorost-maskable-icon-20261003-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

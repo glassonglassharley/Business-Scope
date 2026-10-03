@@ -11,12 +11,16 @@ export const metadata = {
     template: `%s | ${BRAND}`
   },
   description,
+  manifest: "/manifest.webmanifest",
   alternates: {
     canonical: SITE_URL
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png"
+    icon: [
+      { url: "/thorost-favicon-20261003-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" }
+    ],
+    apple: [{ url: "/thorost-apple-touch-icon-20261003.png", sizes: "180x180", type: "image/png" }]
   },
   openGraph: {
     type: "website",
