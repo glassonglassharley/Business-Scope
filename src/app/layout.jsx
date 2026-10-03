@@ -17,10 +17,10 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: "/thorost-favicon-20261003-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/thorost-favicon-20261003-light-32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" }
     ],
-    apple: [{ url: "/thorost-apple-touch-icon-20261003.png", sizes: "180x180", type: "image/png" }]
+    apple: [{ url: "/thorost-apple-touch-icon-20261003-light.png", sizes: "180x180", type: "image/png" }]
   },
   openGraph: {
     type: "website",
