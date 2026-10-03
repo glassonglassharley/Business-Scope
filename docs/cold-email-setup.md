@@ -5,11 +5,26 @@ into conversations, then into BuzzBull referrals (or Thorost cleanups).
 
 ## The stack (costs verified Oct 2026)
 
+**Bootstrap path — $0/mo (recommended until you're sending real volume):**
+You only have ~112 prospects right now. You don't need a scale tool yet.
+
 | Piece | What | Cost |
 |---|---|---|
-| Inbox | Google Workspace Business Starter on thorost.com, user `hello@thorost.com` | ~$7/mo (14-day free trial) |
+| Inbox | Google Workspace on thorost.com, `jonathan@thorost.com` | ~$7/mo |
+| Warmup | E-Warmup free-forever tier (40k+ real inbox network) or TrulyInbox free tier | $0 |
+| Sending | Manual from Gmail, 15–20/day | $0 |
+
+With personalized defect talking points per business, hand-sent emails
+actually outperform automated ones at this volume. 112 prospects ÷ 20/day
+= about a week of sending. Upgrade to Instantly when the prospect list is
+in the thousands and manual sending can't keep up.
+
+**Scale path — ~$54/mo (when volume justifies it):**
+
+| Piece | What | Cost |
+|---|---|---|
+| Inbox | Google Workspace Business Starter on thorost.com | ~$7/mo |
 | Sending + warmup | Instantly Growth plan | ~$47/mo |
-| **Total** | | **~$54/mo** |
 
 Why this stack: Google Workspace inboxes have the best deliverability for
 cold email. Instantly handles warmup automation, inbox rotation, reply
