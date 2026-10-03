@@ -151,7 +151,7 @@ create table pipeline (
   -- signals say it is worth finding one by hand. Distinct from 'disqualified'
   -- so these surface in their own list instead of being silently dropped.
   status            text not null default 'new'
-                    check (status in ('new', 'queued', 'needs_lookup', 'contacted', 'replied', 'meeting', 'won', 'lost', 'disqualified')),
+                    check (status in ('new', 'queued', 'needs_lookup', 'contacted', 'replied', 'meeting', 'referred', 'won', 'lost', 'disqualified')),
   notes             text,
   last_contacted_at timestamptz,
   next_follow_up_at timestamptz,

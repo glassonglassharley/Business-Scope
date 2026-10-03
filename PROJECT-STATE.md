@@ -149,10 +149,15 @@ reason the branch was merged to production.
 
 - **Daily-20 view** — no "today's top 20 to call" rollup; use
   `score.mjs rank --limit 20` per campaign for now.
-- **Pipeline outreach tracking** — the `pipeline` table has the statuses
-  (`new`/`contacted`/`replied`/`won`/`lost`/`needs_lookup`/…) but nothing drives
-  them; discovery/scoring only set `new` / `disqualified` / `needs_lookup`. No UI
-  or CLI to move a prospect through the funnel or log contact attempts.
+- **Pipeline outreach tracking (CLI)** — BUILT 2026-10-02: `scripts/pipeline.mjs`
+  (`queue` / `show` / `contact` / `refer` / `move` / `followups` / `templates`)
+  drives the `pipeline` table through the funnel, logs contact attempts and
+  follow-ups, and hands warm prospects to the fulfillment partner
+  (`refer` prints the attributed partner form URL + copy-paste lead summary,
+  marks the row `referred`). New `referred` status added in migration 0005.
+  Partner specifics come from env (`PARTNER_NAME` / `PARTNER_FORM_URL` /
+  `PARTNER_AM_ID`) so the repo stays partner-agnostic per the leak tests.
+  No web UI — CLI-only by design, same as the rest of the private layer.
 - **Real review velocity** — every momentum score is currently the
   latest-review-recency fallback because each business has only one scan. A
   **re-scan ~30 days out** (`deepscan.mjs run --rescan-days 30`) creates the
