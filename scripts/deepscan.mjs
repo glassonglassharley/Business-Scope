@@ -2,12 +2,17 @@
 // Reuses the EXISTING public scan engine (prospectData → websiteProvider →
 // scoring) and stores computed results as an immutable scans snapshot.
 //
-//   node scripts/deepscan.mjs run --campaign "east-plumbers" [--limit 20] [--rescan-days 30] [--max-requests 100]
+//   node scripts/deepscan.mjs run --campaign "east-plumbers" [--limit 20] [--rescan-days 30] [--max-requests 100] [--skip-solar] [--recheck-solar]
 //
 // Shortlist = pipeline rows still 'new' for the campaign with no scan newer
 // than --rescan-days, highest review count first (most viable first). Also
 // enriches contact_channels from the scanned homepage (emails, forms, social
 // links) at zero extra API cost.
+//
+// Each scanned business also gets its rooftop solar signal (Static Maps tile
+// + vision classification, see src/lib/solarSignal.mjs) unless it already has
+// one — pass --recheck-solar to redo it, --skip-solar to leave it out of this
+// run. A solar failure is logged and counted, never fatal to the scan.
 
 import { parseArgs } from "node:util";
 import { loadEnvLocal } from "./envLocal.mjs";
@@ -20,6 +25,7 @@ const { calculateBusinessHealthScore } = await import("../src/lib/scoring.js");
 const { getDb, refreshCampaignCompleteness } = await import("../src/lib/db.mjs");
 const { sleep } = await import("../src/lib/placesHttp.mjs");
 const { discoveryConfig, estimateCostUsd } = await import("../src/lib/prospectingConfig.mjs");
+const { checkSolarForBusiness } = await import("../src/lib/solarSignal.mjs");
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -27,16 +33,22 @@ const { values, positionals } = parseArgs({
     campaign: { type: "string" },
     limit: { type: "string" },
     "rescan-days": { type: "string" },
-    "max-requests": { type: "string" }
+    "max-requests": { type: "string" },
+    "skip-solar": { type: "boolean" },
+    "recheck-solar": { type: "boolean" }
   }
 });
 
 if (positionals[0] !== "run" || !values.campaign) {
-  console.error("Usage: deepscan.mjs run --campaign <name> [--limit 20] [--rescan-days 30] [--max-requests 100]");
+  console.error("Usage: deepscan.mjs run --campaign <name> [--limit 20] [--rescan-days 30] [--max-requests 100] [--skip-solar] [--recheck-solar]");
   process.exit(1);
 }
 if (!process.env.GOOGLE_PLACES_API_KEY) {
   console.error("GOOGLE_PLACES_API_KEY is not set.");
+  process.exit(1);
+}
+if (!values["skip-solar"] && !process.env.ANTHROPIC_API_KEY) {
+  console.error("ANTHROPIC_API_KEY is not set (needed for the rooftop solar signal). Set it, or pass --skip-solar.");
   process.exit(1);
 }
 
@@ -53,7 +65,7 @@ if (!campaignResult.rows.length) {
 const campaignId = campaignResult.rows[0].id;
 
 const shortlist = await db.query(
-  `select b.id as business_id, b.place_id, b.name, b.city
+  `select b.id as business_id, b.place_id, b.name, b.city, b.lat, b.lng, b.solar_checked_at
    from pipeline p join businesses b on b.id = p.business_id
    where p.campaign_id = $1 and p.status = 'new'
      and not exists (
@@ -71,7 +83,10 @@ const run = await db.query(
 );
 const runId = run.rows[0].id;
 const requestCounts = {};
-const stats = { shortlisted: shortlist.rows.length, scanned: 0, scanErrors: 0, channelsAdded: 0 };
+const stats = {
+  shortlisted: shortlist.rows.length, scanned: 0, scanErrors: 0, channelsAdded: 0,
+  solar: { checked: 0, skipped: 0, errors: 0, has_solar: 0, no_solar: 0, unclear: 0 }
+};
 
 console.log(`Deep scanning ${shortlist.rows.length} businesses (run ${runId})...`);
 
@@ -132,13 +147,15 @@ try {
     );
     await enrichChannels(target.place_id, place, websiteAudit);
     stats.scanned += 1;
+    const solar = await solarSignal(target);
     await persist();
-    console.log(`  ${target.name}: presence ${breakdown.overallScore ?? "n/a"}`);
+    console.log(`  ${target.name}: presence ${breakdown.overallScore ?? "n/a"}, solar ${solar}`);
   }
 
   await finishRun("completed");
   console.log(`\nDone. Requests: ${JSON.stringify(requestCounts)} (~$${estimateCostUsd(requestCounts)})`);
   console.log(`Scanned ${stats.scanned}, errors ${stats.scanErrors}, channels added ${stats.channelsAdded}.`);
+  console.log(`Solar: ${stats.solar.has_solar} has / ${stats.solar.no_solar} none / ${stats.solar.unclear} unclear, ${stats.solar.skipped} skipped, ${stats.solar.errors} errors.`);
   console.log("Next: node scripts/score.mjs recompute --campaign", JSON.stringify(values.campaign));
   process.exit(0);
 } catch (error) {
@@ -169,6 +186,35 @@ async function enrichChannels(placeId, place, websiteAudit) {
       [placeId, row.type, row.platform, row.value]
     );
     if (result.rows[0]?.inserted) stats.channelsAdded += 1;
+  }
+}
+
+/**
+ * Rooftop solar for one scanned business. Returns a short word for the log
+ * line. Skips businesses already checked (unless --recheck-solar) so a re-scan
+ * never pays for the same roof twice; the budget check above covers the two
+ * requests this adds because they go through the same count().
+ */
+async function solarSignal(target) {
+  if (values["skip-solar"]) return "skipped";
+  if (target.solar_checked_at && !values["recheck-solar"]) {
+    stats.solar.skipped += 1;
+    return "already checked";
+  }
+  try {
+    const result = await checkSolarForBusiness(db, { id: target.business_id, lat: target.lat, lng: target.lng }, { count });
+    if (!result.ok) {
+      stats.solar.errors += 1;
+      console.error(`  ${target.name}: solar ${result.code}: ${result.message}`);
+      return `error (${result.code})`;
+    }
+    stats.solar.checked += 1;
+    stats.solar[result.status] += 1;
+    return result.status.replace("_", " ");
+  } catch (error) {
+    stats.solar.errors += 1;
+    console.error(`  ${target.name}: solar failed: ${error.message}`);
+    return "error";
   }
 }
 

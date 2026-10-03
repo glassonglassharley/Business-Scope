@@ -21,6 +21,8 @@
 //   --min-reviews N     cut the 1-3 review micro-listings that dominate the
 //                       bottom of the presence-score range
 //   --reachable-only    drop rows with no phone/email/form/social on file
+//   --solar has|none|unclear|unchecked   rooftop solar signal (businesses.solar_status);
+//                       default any
 //   --include-incomplete  allow campaigns whose discovery/deep scan hit the ceiling
 //
 // Output format (default is the readable console call sheet):
@@ -46,6 +48,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { loadEnvLocal } from "./envLocal.mjs";
 import { prospectScoringConfig } from "../src/lib/prospectingConfig.mjs";
+import { parseSolarFilter, solarFilterSql, solarLabel } from "../src/lib/solarSignal.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -59,6 +62,7 @@ const { values } = parseArgs({
     limit: { type: "string" },
     by: { type: "string" },
     site: { type: "string" },
+    solar: { type: "string" },
     "min-reviews": { type: "string" },
     "reachable-only": { type: "boolean" },
     "include-incomplete": { type: "boolean" },
@@ -69,6 +73,7 @@ const { values } = parseArgs({
 });
 
 const limit = Number(values.limit || 15);
+const solarFilter = parseSolarFilter(values.solar);
 const orderBy = values.by === "prospect"
   ? "ps.prospect_score desc, s.presence_score asc"
   : "s.presence_score asc, ps.weakness desc";
@@ -93,7 +98,7 @@ if (values.campaign && !values["include-incomplete"]) {
 
 const result = await db.query(
   `select b.name, b.place_id, b.city, b.primary_type, b.phone, b.website_url,
-          b.rating, b.review_count, b.business_status,
+          b.rating, b.review_count, b.business_status, b.solar_status,
           c.name  as campaign,
           s.presence_score, s.score_breakdown, s.signals as scan_signals, s.scanned_at,
           ps.prospect_score, ps.weakness, ps.viability, ps.momentum,
@@ -121,11 +126,12 @@ const result = await db.query(
            or ($5 = 'broken' and b.website_url is not null
                              and s.signals->>'websiteBroken' = 'true')
            or  $5 = 'any')
+      and ${solarFilterSql("$7")}
     order by ${orderBy}
     limit $6`,
   [values.campaign ?? null, values.type ?? null, values.city ?? null,
    values["min-reviews"] ? Number(values["min-reviews"]) : null,
-   values.site ?? null, limit * 3]
+   values.site ?? null, limit * 3, solarFilter]
 );
 
 let rows = result.rows;
@@ -156,6 +162,7 @@ function scopeLabel() {
     values.type && `type ${values.type}`,
     values.city && `city ${values.city}`,
     values.site && values.site !== "any" && `site ${values.site}`,
+    solarFilter && `solar ${values.solar}`,
     values["min-reviews"] && `${values["min-reviews"]}+ reviews`
   ].filter(Boolean).join(", ") || "all scored campaigns";
 }
@@ -177,6 +184,7 @@ function printCallSheet(rows) {
     console.log(`${String(i + 1).padStart(2)}. ${r.name}${r.city ? ` — ${r.city}` : ""}   [${r.primary_type || "?"}]`);
     console.log(`    presence ${r.presence_score}/100   weakness ${num(r.weakness)}   prospect ${num(r.prospect_score)}   ${r.review_count ?? "?"} reviews @ ${r.rating ?? "?"}★`);
     console.log(`    site: ${websiteStatus(r.website_url, r.scan_signals)}${r.website_url ? `  ${r.website_url}` : ""}`);
+    console.log(`    solar: ${solarLabel(r.solar_status)}`);
     for (const p of problems) console.log(`    · ${p}`);
     if (!problems.length) console.log(`    · (no per-metric detail on this scan)`);
     console.log(`    reach: ${contactLine(r)}`);
@@ -250,13 +258,13 @@ function num(v) {
 
 function printCsv(rows) {
   const header = ["rank", "business", "city", "type", "campaign", "presence_score", "weakness", "prospect_score",
-    "reviews", "rating", "website_status", "problem_1", "problem_2", "problem_3", "contact"];
+    "reviews", "rating", "website_status", "solar", "problem_1", "problem_2", "problem_3", "contact"];
   const lines = [header.join(",")];
   for (const [i, r] of rows.entries()) {
     const p = topProblems(r.score_breakdown, 3);
     lines.push([i + 1, r.name, r.city || "", r.primary_type || "", r.campaign,
       r.presence_score, num(r.weakness), num(r.prospect_score), r.review_count ?? "", r.rating ?? "",
-      websiteStatus(r.website_url, r.scan_signals), p[0] || "", p[1] || "", p[2] || "", contactLine(r)
+      websiteStatus(r.website_url, r.scan_signals), solarLabel(r.solar_status), p[0] || "", p[1] || "", p[2] || "", contactLine(r)
     ].map(cell).join(","));
   }
   console.log("﻿" + lines.join("\r\n"));
@@ -338,6 +346,7 @@ function htmlDocument(rows) {
   .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
          border: 1px solid currentColor; margin-top: 5px; }
   .t-none { color: #b91c1c; } .t-broken { color: #b45309; } .t-has { color: #57606a; }
+  .t-solar { color: #0e7490; } .t-nosolar { color: #57606a; } .t-unclear { color: #8c959f; }
   ul.problems { margin: 0; padding-left: 17px; }
   ul.problems li { margin-bottom: 5px; }
   ul.problems li:last-child { margin-bottom: 0; }
@@ -390,6 +399,7 @@ function htmlRow(row, index) {
   const status = websiteStatus(row.website_url, row.scan_signals);
   const statusClass = status === "NO WEBSITE" ? "t-none" : status === "LISTED BUT NOT LOADING" ? "t-broken" : "t-has";
   const scoreClass = row.presence_score <= 50 ? "s-bad" : row.presence_score <= 70 ? "s-mid" : "s-ok";
+  const solarClass = { has_solar: "t-solar", no_solar: "t-nosolar" }[row.solar_status] || "t-unclear";
 
   const site = row.website_url
     ? ` <a href="${esc(safeUrl(row.website_url))}" rel="noreferrer noopener">${esc(shorten(row.website_url, 42))}</a>`
@@ -409,7 +419,8 @@ function htmlRow(row, index) {
       <td>
         <span class="biz">${esc(row.name)}</span>
         <span class="sub">${esc(row.primary_type || "uncategorized")} · ${esc(row.review_count ?? "?")} reviews @ ${esc(row.rating ?? "?")}★</span>
-        <span class="tag ${statusClass}">${esc(status.toLowerCase())}</span>${site}
+        <span class="tag ${statusClass}">${esc(status.toLowerCase())}</span>
+        <span class="tag ${solarClass}">solar: ${esc(solarLabel(row.solar_status))}</span>${site}
       </td>
       <td class="city">${esc(row.city || "—")}</td>
       <td class="score ${scoreClass}">${esc(row.presence_score)}<small>of 100</small></td>

@@ -184,7 +184,12 @@ export const discoveryConfig = {
     place_details_full: 25,
     geocode: 5,
     psi: 0,
-    yelp: 0
+    yelp: 0,
+    // Rooftop solar signal (src/lib/solarSignal.mjs): one Static Maps tile
+    // plus one vision call per business. solar_vision is an estimate for an
+    // 800x800 image (~850 input tokens) + short JSON reply at Opus 5 rates.
+    static_map: 2,
+    solar_vision: 10
   },
 
   // Normalized substring match against business names. Lowercase, letters and

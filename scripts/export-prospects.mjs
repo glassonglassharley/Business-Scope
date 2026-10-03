@@ -1,12 +1,13 @@
 // Exports a campaign's qualified prospect list to CSV — the call sheet.
 //
-//   node scripts/export-prospects.mjs --campaign "sd-plumbers-8km" [--out path.csv]
+//   node scripts/export-prospects.mjs --campaign "sd-plumbers-8km" [--out path.csv] [--solar has|none|unclear|unchecked]
 //
 // One row per qualified (not disqualified, scored) business, ranked by
 // prospect_score. Contact channels come from contact_channels; the top three
 // specific defects are the lowest-scoring website-side metrics from the latest
 // scan, weighted toward what the offer fixes, so they are concrete talking
-// points rather than category labels.
+// points rather than category labels. The solar columns carry the rooftop
+// signal and the KEY-LESS Static Maps URL that was classified.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -14,15 +15,17 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { loadEnvLocal } from "./envLocal.mjs";
 import { prospectScoringConfig } from "../src/lib/prospectingConfig.mjs";
+import { parseSolarFilter, solarFilterSql, solarLabel } from "../src/lib/solarSignal.mjs";
 
 loadEnvLocal();
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { values } = parseArgs({ options: { campaign: { type: "string" }, out: { type: "string" }, "include-incomplete": { type: "boolean" } } });
+const { values } = parseArgs({ options: { campaign: { type: "string" }, out: { type: "string" }, solar: { type: "string" }, "include-incomplete": { type: "boolean" } } });
 if (!values.campaign) {
-  console.error("Usage: export-prospects.mjs --campaign <name> [--out path.csv] [--include-incomplete]");
+  console.error("Usage: export-prospects.mjs --campaign <name> [--out path.csv] [--solar has|none|unclear|unchecked] [--include-incomplete]");
   process.exit(1);
 }
+const solarFilter = parseSolarFilter(values.solar);
 
 const { getDb } = await import("../src/lib/db.mjs");
 const db = getDb();
@@ -41,12 +44,14 @@ const campaignId = campaign.rows[0].id;
 
 const rows = await db.query(
   `select b.id, b.place_id, b.name, b.city, b.phone, b.website_url, b.rating, b.review_count, b.business_status,
+          b.solar_status, b.solar_image_url,
           ps.prospect_score, ps.weakness, ps.viability, ps.momentum, ps.reachability_factor, ps.completeness, ps.weights_version
    from prospect_scores ps
    join businesses b on b.id = ps.business_id
    where ps.campaign_id = $1 and ps.disqualified = false and ps.prospect_score is not null
+     and ${solarFilterSql("$2")}
    order by ps.prospect_score desc`,
-  [campaignId]
+  [campaignId, solarFilter]
 );
 
 const outPath = values.out
@@ -57,7 +62,7 @@ mkdirSync(path.dirname(outPath), { recursive: true });
 const header = [
   "rank", "business", "city", "phone", "email", "web_form", "social",
   "prospect_score", "weakness", "viability", "momentum", "reachability", "completeness",
-  "review_count", "rating", "website_status", "weights_version",
+  "review_count", "rating", "website_status", "solar", "solar_image_url", "weights_version",
   "defect_1", "defect_2", "defect_3"
 ];
 
@@ -93,6 +98,8 @@ for (const [index, row] of rows.rows.entries()) {
     row.review_count ?? "",
     row.rating ?? "",
     websiteStatus(row.website_url, scan.rows[0]?.signals),
+    solarLabel(row.solar_status),
+    row.solar_image_url || "",
     row.weights_version,
     defects[0] || "",
     defects[1] || "",

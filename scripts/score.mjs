@@ -1,7 +1,7 @@
 // Prospect scoring CLI. Pure derivation — NO API calls, ever.
 //
 //   node scripts/score.mjs recompute --campaign "east-plumbers"   wipe + rescore the campaign
-//   node scripts/score.mjs rank --campaign "east-plumbers" [--limit 20]
+//   node scripts/score.mjs rank --campaign "east-plumbers" [--limit 20] [--solar has|none|unclear|unchecked]
 //   node scripts/score.mjs demo                                   worked examples, no DB needed
 //
 // recompute deletes the campaign's prospect_scores rows and rebuilds them
@@ -12,6 +12,7 @@ import { parseArgs } from "node:util";
 import { loadEnvLocal } from "./envLocal.mjs";
 import { computeProspectScore } from "../src/lib/prospectScoring.mjs";
 import { discoveryConfig, prospectScoringConfig } from "../src/lib/prospectingConfig.mjs";
+import { parseSolarFilter, solarFilterSql, solarLabel } from "../src/lib/solarSignal.mjs";
 
 loadEnvLocal();
 
@@ -20,6 +21,7 @@ const { values, positionals } = parseArgs({
   options: {
     campaign: { type: "string" },
     limit: { type: "string" },
+    solar: { type: "string" },
     "include-incomplete": { type: "boolean" }
   }
 });
@@ -183,28 +185,30 @@ async function rank() {
   const db = getDb();
   await assertComplete(db, values.campaign);
   const limit = Number(values.limit || 20);
+  const solarFilter = parseSolarFilter(values.solar);
 
   const result = await db.query(
-    `select b.name, b.city, b.phone, b.website_url,
+    `select b.name, b.city, b.phone, b.website_url, b.solar_status,
             ps.prospect_score, ps.weakness, ps.viability, ps.momentum,
             ps.reachability_factor, ps.completeness, ps.weights_version
      from prospect_scores ps join businesses b on b.id = ps.business_id
      where ps.campaign_id = (select id from campaigns where name = $1)
        and ps.disqualified = false and ps.prospect_score is not null
+       and ${solarFilterSql("$3")}
      order by ps.prospect_score desc
      limit $2`,
-    [values.campaign, limit]
+    [values.campaign, limit, solarFilter]
   );
 
   if (!result.rows.length) {
-    console.log("No scored candidates yet. Run discovery, deepscan, then recompute.");
+    console.log(solarFilter ? `No scored candidates with solar = ${values.solar}.` : "No scored candidates yet. Run discovery, deepscan, then recompute.");
     process.exit(0);
   }
-  console.log(`Top ${result.rows.length} — campaign "${values.campaign}" (weights ${result.rows[0].weights_version})\n`);
-  console.log("  score  weak  viab  mom   reach  compl  business");
+  console.log(`Top ${result.rows.length} — campaign "${values.campaign}" (weights ${result.rows[0].weights_version})${solarFilter ? ` — solar: ${values.solar}` : ""}\n`);
+  console.log("  score  weak  viab  mom   reach  compl  solar      business");
   for (const [index, row] of result.rows.entries()) {
     console.log(
-      `${String(index + 1).padStart(3)}. ${fmt(row.prospect_score, 5)} ${fmt(row.weakness, 5)} ${fmt(row.viability, 5)} ${fmt(row.momentum, 5)} ${fmt(row.reachability_factor, 5)} ${fmt(row.completeness, 5)}  ${row.name}${row.city ? ` (${row.city})` : ""} ${row.phone || row.website_url || ""}`
+      `${String(index + 1).padStart(3)}. ${fmt(row.prospect_score, 5)} ${fmt(row.weakness, 5)} ${fmt(row.viability, 5)} ${fmt(row.momentum, 5)} ${fmt(row.reachability_factor, 5)} ${fmt(row.completeness, 5)}  ${solarLabel(row.solar_status).padEnd(9)}  ${row.name}${row.city ? ` (${row.city})` : ""} ${row.phone || row.website_url || ""}`
     );
   }
   process.exit(0);
