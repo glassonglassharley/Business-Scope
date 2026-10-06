@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { SITE_URL } from "@/lib/brand";
 
-const SCANNER_URL = "/?scanner=free-business-scanner";
+const SCANNER_URL = "https://opt.buzzbullmarketing.com/registration";
 const BUZZBULL_LOGO = "/buzzbull-logo.png";
 
 export const metadata = {
@@ -114,8 +114,8 @@ export default function FreeSnapshotPage() {
 
       <header className="border-b border-[#f97316]/25 bg-black px-5 py-5">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <Image src={BUZZBULL_LOGO} alt="BuzzBull Marketing Systems" width={272} height={128} className="h-14 w-auto bg-black object-contain" priority />
           <a className="bg-[#f97316] px-5 py-3 text-sm font-black uppercase tracking-[0.14em] text-black transition hover:bg-[#ff8a2a] sm:px-8" href={SCANNER_URL}>Get free scanner</a>
+          <Image src={BUZZBULL_LOGO} alt="BuzzBull Marketing Systems" width={959} height={540} className="h-20 w-auto object-contain sm:h-24" priority />
         </div>
       </header>
 
@@ -210,7 +210,7 @@ export default function FreeSnapshotPage() {
 
       <footer className="border-t border-[#f97316]/20 bg-black px-5 py-10">
         <div className="mx-auto max-w-7xl">
-          <Image src={BUZZBULL_LOGO} alt="BuzzBull Marketing Systems" width={272} height={128} className="h-14 w-auto" />
+          <Image src={BUZZBULL_LOGO} alt="BuzzBull Marketing Systems" width={959} height={540} className="h-20 w-auto object-contain" />
           <p className="mt-6 text-sm text-[#71869b]">© 2026 BuzzBull Marketing Systems. Thorost Scanner is used as a diagnostic engine for public business presence review.</p>
           <p className="mt-5 max-w-5xl text-sm leading-6 text-[#71869b]">Disclaimer: Examples and calculations are illustrative. Results vary by business, market, offer, execution, and other factors. No specific outcome is guaranteed.</p>
         </div>
